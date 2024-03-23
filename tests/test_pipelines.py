@@ -19,9 +19,9 @@ def test_pipeline_config_defaults():
     config = spider.pipeline_config
     assert isinstance(config, PipelineConfig)
     assert config.backend == BackendType.FILE
-    assert config.s3_bucket == "base_spider"
+    assert config.s3_bucket == "concrete_spider"
     # Use the updated default filename here
-    assert config.filename == "base_spider.json"
+    assert config.filename == "concrete_spider.json"
 
 
 def test_pipeline_config_with_values():
@@ -69,7 +69,7 @@ def test_process_items_with_s3_backend():
 
         mock_s3_client.assert_called_once_with("s3")
         mock_s3_client.return_value.put_object.assert_called_once_with(
-            Body=json.dumps(items), Bucket="my-bucket", Key="example.com.json"
+            Body=json.dumps(items), Bucket="my-bucket", Key="example.json"
         )
 
 
@@ -104,5 +104,5 @@ def test_export_to_s3():
 
         mock_s3_client.assert_called_once_with("s3")
         mock_s3_client.return_value.put_object.assert_called_once_with(
-            Body=json.dumps(items), Bucket="my-bucket", Key="example.com.json"
+            Body=json.dumps(items), Bucket="my-bucket", Key="example.json"
         )
