@@ -3,8 +3,10 @@ import logging
 # Configure the logger
 # Configure the logger for the entire module
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S"
+)
 
 # Configure file handler
 file_handler = logging.FileHandler("spidy.log")

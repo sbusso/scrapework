@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Iterable, Union
+from typing import Dict, Iterable, List, Union
 
 import boto3
 from pydantic import BaseModel
@@ -10,11 +10,11 @@ from scrapework.config import BackendType, PipelineConfig
 class ItemPipeline(BaseModel):
     def process_items(self, items: Union[Dict, Iterable], config: PipelineConfig):
         if config.backend == BackendType.FILE:
-            self.export_to_json(items, config)
+            self.export_to_json(list(items), config)
         elif config.backend == BackendType.S3:
             self.export_to_s3(items, config)
 
-    def export_to_json(self, items: Union[Dict, Iterable], config: PipelineConfig):
+    def export_to_json(self, items: Union[Dict, List], config: PipelineConfig):
         file_name = config.filename
         with open(file_name, "w") as f:
             json.dump(items, f)

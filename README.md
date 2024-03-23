@@ -1,6 +1,6 @@
 # Scrapework
 
-Scrapework is a simple scraping framework inspired by Scrapy. It's designed for simple tasks and management, allowing you to focus on the scraping logic and not on the boilerplate code.
+Scrapework is a simple and opiniatated scraping framework inspired by Scrapy. It's designed for simple tasks and management, allowing you to focus on the scraping logic and not on the boilerplate code.
 
 - No CLI
 - No twisted / async

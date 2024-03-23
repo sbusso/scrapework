@@ -85,6 +85,8 @@ class Spider(BaseModel, ABC):
     def make_request(self, url: str) -> Optional[requests.Response]:
         request = requests.Request("GET", url)
 
+        self.logger.info(f"Making request to {url}")
+
         for middleware in self.middlewares:
             request = middleware.process_request(request)
 
@@ -92,5 +94,7 @@ class Spider(BaseModel, ABC):
 
         prepared_request = session.prepare_request(request)
         response = session.send(prepared_request)
+
+        self.logger.info(f"Received response with status code {response.status_code}")
 
         return response
