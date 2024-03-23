@@ -1,17 +1,19 @@
+import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
 import requests
 from pydantic import BaseModel
 
 from scrapework.config import BackendType, PipelineConfig
 from scrapework.extractors import Extractor
+from scrapework.logger import logger
+from scrapework.middleware import Middleware
 from scrapework.pipelines import ItemPipeline
 
 
 class Spider(BaseModel, ABC):
-
-    name: str
+    name: ClassVar[str] = "base_spider"
     start_urls: List[str] = []
     pipeline: Optional[ItemPipeline] = None
     base_url: str = ""
@@ -21,9 +23,14 @@ class Spider(BaseModel, ABC):
     callback: Optional[
         Callable[[requests.Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
+    middlewares: List[Middleware] = []
+    logger: ClassVar[logging.Logger] = logger
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
+    def __init__(self, **args):
+
+        if not self.__class__.name:
+            raise ValueError("Subclass must provide a name attribute")
+        super().__init__(**args)
         self.callback = self.parse
         if not self.base_url and self.start_urls:
             self.base_url = self.start_urls[0]
@@ -36,6 +43,9 @@ class Spider(BaseModel, ABC):
 
     class Config:
         arbitrary_types_allowed = True
+
+    def use(self, middleware: Middleware):
+        self.middlewares.append(middleware)
 
     @abstractmethod
     def parse(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
@@ -72,10 +82,15 @@ class Spider(BaseModel, ABC):
 
             self.pipeline.process_items(items, self.pipeline_config)
 
-    @staticmethod
-    def make_request(url: str) -> Optional[requests.Response]:
+    def make_request(self, url: str) -> Optional[requests.Response]:
+        request = requests.Request("GET", url)
+
+        for middleware in self.middlewares:
+            request = middleware.process_request(request)
+
         session = requests.Session()
-        session.headers.update({"User-Agent": "Mozilla/5.0"})
-        response = session.get(url)
+
+        prepared_request = session.prepare_request(request)
+        response = session.send(prepared_request)
 
         return response

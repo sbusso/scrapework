@@ -21,6 +21,7 @@ config = Config()
 class BackendType(enum.Enum):
     FILE = "file"
     S3 = "s3"
+    META = "meta"
 
 
 class PipelineConfig(BaseModel):

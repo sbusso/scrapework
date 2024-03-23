@@ -8,12 +8,14 @@ from scrapework.spider import Spider
 
 # Create a concrete subclass of Spider for testing purposes
 class ConcreteSpider(Spider):
+    name = "concrete_spider"
+
     def parse(self):
         pass
 
 
 def test_pipeline_config_defaults():
-    spider = ConcreteSpider(name="base_spider")
+    spider = ConcreteSpider()
     config = spider.pipeline_config
     assert isinstance(config, PipelineConfig)
     assert config.backend == BackendType.FILE
@@ -23,7 +25,7 @@ def test_pipeline_config_defaults():
 
 
 def test_pipeline_config_with_values():
-    spider = ConcreteSpider(name="base_spider")
+    spider = ConcreteSpider()
     spider.base_url = "https://example.com"
     spider.backend = BackendType.FILE
     spider.s3_bucket = "my-bucket"
