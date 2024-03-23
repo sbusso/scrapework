@@ -13,9 +13,7 @@ Scrapework is a simple and opiniatated scraping framework inspired by Scrapy. It
 First, clone the repository and install the dependencies:
 
 ```sh
-git clone https://github.com/yourusername/scrapework.git
-cd scrapework
-poetry install
+poetry add scrapework
 ```
 
 ### Spider Configuration

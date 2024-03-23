@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import List, Optional
+from random import choice
+from typing import List
 from urllib.parse import urlencode
 
 import requests
@@ -9,10 +10,13 @@ from pydantic import BaseModel
 class Proxy(BaseModel):
     url: str
 
+    def validate(self, value):
+        if not value.startswith("http"):
+            raise ValueError("Proxy url must start with http")
+        return value
+
 
 class Middleware(BaseModel):
-    proxies: Optional[List[Proxy]] = None
-
     @abstractmethod
     def process_request(self, request):
         raise NotImplementedError
@@ -37,9 +41,11 @@ class MiddlewareLogging(Middleware):
 
 
 class MiddlewareProxy(Middleware):
+    proxy: Proxy
+
     def process_request(self, request):
-        if self.proxies:
-            request.proxies = self.proxies
+        if self.proxy:
+            request.proxies = self.proxy.url
 
         return request
 
@@ -53,4 +59,16 @@ class MiddlewareScrapeOps(Middleware):
         request = requests.get(
             "https://proxy.scrapeops.io/v1/", params=urlencode(payload)
         )
+        return request
+
+
+class ProxyRotationMiddleware(Middleware):
+    proxies: List[Proxy]  # "http://Username:Password@85.237.57.198:20000",
+
+    def process_request(self, request):
+        proxy = choice(self.proxies)
+        request.proxies = {
+            "http": proxy.url,
+            "https": proxy.url,
+        }
         return request
