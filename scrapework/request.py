@@ -15,6 +15,9 @@ class Request(BaseModel):
     proxy: str | None = None
     retries: int = 0
 
+    class Config:
+        arbitrary_types_allowed = True
+
     def fetch(self) -> httpx.Response:
         """
         Fetches the HTML content of a given URL.

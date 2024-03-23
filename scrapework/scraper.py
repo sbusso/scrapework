@@ -8,14 +8,14 @@ from pydantic import BaseModel, Field
 from scrapework.config import EnvConfig
 from scrapework.context import Context
 from scrapework.extractors import BodyExtractor
-from scrapework.logger import logger
+from scrapework.logger import new_logger
 from scrapework.middleware import Middleware
 from scrapework.pipelines import Pipeline
 from scrapework.request import Request
 
 
-class Spider(BaseModel, ABC):
-    name: ClassVar[str] = "base_spider"
+class Scraper(BaseModel, ABC):
+    name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
     pipelines: List[Pipeline] = []
     base_url: str = ""
@@ -24,7 +24,7 @@ class Spider(BaseModel, ABC):
         Callable[[Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
     middlewares: List[Middleware] = []
-    logger: ClassVar[logging.Logger] = logger
+    logger: logging.Logger = logging.getLogger(name)
     config: EnvConfig = Field(default_factory=EnvConfig)
 
     def __init__(self, **args):
@@ -39,6 +39,8 @@ class Spider(BaseModel, ABC):
 
         if not self.filename:
             self.filename = f"{self.name}.json"
+
+        self.logger = new_logger(self.name)
 
     class SpiderConfig(EnvConfig):
         pass
