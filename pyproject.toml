@@ -5,6 +5,8 @@ description = "simple scraping framework"
 authors = ["Stéphane Busso <stephane.busso@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/sbusso/scrapework"
+homepage = "https://github.com/sbusso/scrapework"
 
 [tool.poetry.dependencies]
 python = "^3.11"
