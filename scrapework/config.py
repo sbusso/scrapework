@@ -1,9 +1,8 @@
 import enum
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field, BaseSettings
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -24,18 +23,8 @@ class BackendType(enum.Enum):
     S3 = "s3"
 
 
-class SpiderConfig(BaseModel):
-    # Define configuration fields
+class PipelineConfig(BaseModel):
     base_url: str
-    backend: BackendType = Field(
-        BackendType.FILE,
-        description="Backend can be either 'file' or 's3'",
-    )
-    s3_bucket: Optional[str] = None
-
-    def validate(self):
-        if self.base_url:
-            if not self.base_url.startswith("http"):
-                raise ValueError("Base URL must start with http:// or https://")
-        else:
-            raise ValueError("Base URL not provided")
+    backend: BackendType
+    s3_bucket: str
+    filename: str
