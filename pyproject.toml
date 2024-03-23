@@ -13,6 +13,8 @@ python-dotenv = "^1.0.1"
 boto3 = "^1.34.68"
 pydantic = "^2.6.4"
 parsel = "^1.9.0"
+courlan = "^1.0.0"
+trafilatura = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"

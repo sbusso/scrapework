@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock
 
-from scrapework.extractors import Extractor
+from scrapework.extractors import BodyExtractor, Extractor
 
 
 def test_extract_body():
-    extractor = Extractor()
+    extractor = BodyExtractor()
     response = MagicMock()
     response.text = "<body>Hello, world!</body>"
-    result = extractor.extract_body(response)
+    result = extractor.extract(response)
     assert result == {"body": "Hello, world!"}
 
 

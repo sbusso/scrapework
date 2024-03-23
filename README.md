@@ -16,6 +16,14 @@ First, clone the repository and install the dependencies:
 poetry add scrapework
 ```
 
+### Quick Start
+
+Flow:
+
+- Fetch: retrieve web pages
+- Extract: parse and extract structured data from pages
+- Pipeline: transform and export the structured data
+
 ### Spider Configuration
 
 - `start_urls`: A list of URLs to start scraping from.
