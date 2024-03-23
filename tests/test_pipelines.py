@@ -1,8 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from scrapework.config import BackendType, PipelineConfig
-from scrapework.pipelines import ItemPipeline
+from scrapework.config import PipelineConfig
 from scrapework.spider import Spider
 
 
@@ -12,30 +11,6 @@ class ConcreteSpider(Spider):
 
     def parse(self):
         pass
-
-
-def test_pipeline_config_defaults():
-    spider = ConcreteSpider()
-    config = spider.pipeline_config
-    assert isinstance(config, PipelineConfig)
-    assert config.backend == BackendType.FILE
-    assert config.s3_bucket == "concrete_spider"
-    # Use the updated default filename here
-    assert config.filename == "concrete_spider.json"
-
-
-def test_pipeline_config_with_values():
-    spider = ConcreteSpider()
-    spider.base_url = "https://example.com"
-    spider.backend = BackendType.FILE
-    spider.s3_bucket = "my-bucket"
-    spider.filename = "data.csv"
-    config = spider.pipeline_config
-    assert isinstance(config, PipelineConfig)
-    assert config.base_url == "https://example.com"
-    assert config.backend == BackendType.FILE
-    assert config.s3_bucket == "my-bucket"
-    assert config.filename == "data.csv"
 
 
 def test_process_items_with_file_backend():

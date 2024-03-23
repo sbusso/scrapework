@@ -3,43 +3,43 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from scrapework.config import BackendType, PipelineConfig
+from scrapework.config import EnvConfig
 from scrapework.extractors import Extractor
 from scrapework.logger import logger
 from scrapework.middleware import Middleware
-from scrapework.pipelines import ItemPipeline
+from scrapework.pipelines import Pipeline
 
 
 class Spider(BaseModel, ABC):
     name: ClassVar[str] = "base_spider"
     start_urls: List[str] = []
-    pipeline: Optional[ItemPipeline] = None
+    pipelines: List[Pipeline] = []
     base_url: str = ""
-    backend: BackendType = BackendType.FILE
-    s3_bucket: str = ""
     filename: str = ""
     callback: Optional[
         Callable[[requests.Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
     middlewares: List[Middleware] = []
     logger: ClassVar[logging.Logger] = logger
+    config: EnvConfig = Field(default_factory=EnvConfig)
 
     def __init__(self, **args):
 
         if not self.__class__.name:
             raise ValueError("Subclass must provide a name attribute")
         super().__init__(**args)
+        self.config = self.SpiderConfig.create_config()
         self.callback = self.parse
         if not self.base_url and self.start_urls:
             self.base_url = self.start_urls[0]
-        if not self.s3_bucket:
-            self.s3_bucket = self.name
+
         if not self.filename:
             self.filename = f"{self.name}.json"
-        if not self.pipeline:
-            self.pipeline = ItemPipeline()
+
+    class SpiderConfig(EnvConfig):
+        pass
 
     class Config:
         arbitrary_types_allowed = True
@@ -50,15 +50,6 @@ class Spider(BaseModel, ABC):
     @abstractmethod
     def parse(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         Extractor().extract_body(response)
-
-    @property
-    def pipeline_config(self) -> PipelineConfig:
-        return PipelineConfig(
-            base_url=self.base_url,
-            backend=self.backend,
-            s3_bucket=self.s3_bucket,
-            filename=self.filename,
-        )
 
     def run(self):
         for url in self.start_urls:
@@ -77,10 +68,11 @@ class Spider(BaseModel, ABC):
 
             items = self.callback(response)
 
-            if not self.pipeline:
-                raise ValueError("Pipeline not defined")
+            if items is None:
+                raise ValueError("Items not returned")
 
-            self.pipeline.process_items(items, self.pipeline_config)
+            for pipeline in self.pipelines:
+                pipeline.process_items(items, self.filename)
 
     def make_request(self, url: str) -> Optional[requests.Response]:
         request = requests.Request("GET", url)

@@ -18,6 +18,13 @@ cd scrapework
 poetry install
 ```
 
+### Spider Configuration
+
+- `start_urls`: A list of URLs to start scraping from.
+- pipelines
+- extractors: comes with various extractors (plain body, smart extractors, markedown.)
+- middlewares: comes with various middlewares
+
 ### Creating a Spider
 
 A Spider is a class that defines how to navigate a website and extract data. Here's how you can create a Spider:

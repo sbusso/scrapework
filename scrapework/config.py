@@ -1,31 +1,33 @@
-import enum
+import os
+from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
 
-class Config(BaseModel):
-    # S3_ENDPOINT: str = Field(default=os.environ["AWS_ENDPOINT_URL"])
-    # S3_BUCKET: str = Field(default=os.environ["S3_BUCKET"])
-    # S3_ACCESS_KEY_ID: str = Field(default=os.environ["AWS_ACCESS_KEY_ID"])
-    # S3_SECRET_ACCESS_KEY: str = Field(default=os.environ["AWS_SECRET_ACCESS_KEY"])
-    # TELEGRAM_SENDER_TOKEN: str = Field(default=os.environ["TELEGRAM_SENDER_TOKEN"])
-    pass
+class EnvConfig(BaseModel):
+    @classmethod
+    def create_config(cls):
+        fields = {}
+        for field_name, field_value in cls.__fields__.items():
+            if field_name in os.environ:
+                fields[field_name] = os.environ[field_name]
+            else:
+                raise ValueError(
+                    f"Required environment variable '{field_name}' not set"
+                )
+
+        return cls(**fields)
 
 
-config = Config()
+config = EnvConfig()
 
-
-class BackendType(enum.Enum):
-    FILE = "file"
-    S3 = "s3"
-    META = "meta"
+SCRAPEOPS_API_KEY: Optional[str] = Field(default=os.environ.get("SCRAPEOPS_API_KEY"))
 
 
 class PipelineConfig(BaseModel):
     base_url: str
-    backend: BackendType
-    s3_bucket: str
+
     filename: str

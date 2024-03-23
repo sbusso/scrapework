@@ -1,30 +1,52 @@
 import json
-from typing import Dict, Iterable, List, Union
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Iterable, Union
 
 import boto3
-from pydantic import BaseModel
-
-from scrapework.config import BackendType, PipelineConfig
+from pydantic import Field
 
 
-class ItemPipeline(BaseModel):
-    def process_items(self, items: Union[Dict, Iterable], config: PipelineConfig):
-        if config.backend == BackendType.FILE:
-            self.export_to_json(list(items), config)
-        elif config.backend == BackendType.S3:
-            self.export_to_s3(items, config)
+class Pipeline(ABC):
+    @abstractmethod
+    def process_items(
+        self,
+        items: Union[Dict[str, Any], Iterable[Dict[str, Any]]],
+        filename: str | None,
+    ):
+        pass
 
-    def export_to_json(self, items: Union[Dict, List], config: PipelineConfig):
-        file_name = config.filename
-        with open(file_name, "w") as f:
+
+class JsonFilePipeline(Pipeline):
+    def process_items(
+        self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]], filename: str
+    ):
+
+        with open(filename, "w") as f:
             json.dump(items, f)
 
-    def export_to_s3(self, items: Union[Dict, Iterable], config: PipelineConfig):
-        if not config.s3_bucket:
-            raise ValueError("S3 bucket name not provided in the configuration.")
+
+class S3Pipeline(Pipeline):
+    s3_bucket: str = Field(default_factory=str)
+
+    def process_items(
+        self,
+        items: Union[Dict[str, Any], Iterable[Dict[str, Any]]],
+        filename: str,
+    ):
 
         s3_client = boto3.client("s3")
-        file_name = config.filename
+
         s3_client.put_object(
-            Body=json.dumps(items), Bucket=config.s3_bucket, Key=file_name
+            Body=json.dumps(items), Bucket=self.s3_bucket, Key=filename
         )
+
+
+class MetadataPipeline(Pipeline):
+    def process_items(
+        self,
+        items: Union[Dict[str, Any], Iterable[Dict[str, Any]]],
+    ):
+        if isinstance(items, dict):
+            return {"items_count": 1}
+        else:
+            return {"items_count": len(list(items))}
