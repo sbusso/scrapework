@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Union
 
 import boto3
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
-class Pipeline(ABC):
+class Pipeline(ABC, BaseModel):
     @abstractmethod
     def process_items(
         self,

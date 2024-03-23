@@ -11,7 +11,7 @@ class EnvConfig(BaseModel):
     @classmethod
     def create_config(cls):
         fields = {}
-        for field_name, field_value in cls.__fields__.items():
+        for field_name, field_value in cls.model_fields.items():
             if field_name in os.environ:
                 fields[field_name] = os.environ[field_name]
             else:
@@ -29,5 +29,4 @@ SCRAPEOPS_API_KEY: Optional[str] = Field(default=os.environ.get("SCRAPEOPS_API_K
 
 class PipelineConfig(BaseModel):
     base_url: str
-
     filename: str
