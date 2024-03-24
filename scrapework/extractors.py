@@ -1,11 +1,10 @@
 from typing import Any, Dict, Iterable, Union
 
 from parsel import Selector
-from pydantic import BaseModel
 from trafilatura import bare_extraction
 
 
-class Extractor(BaseModel):
+class Extractor:
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         raise NotImplementedError
 

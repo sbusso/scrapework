@@ -624,6 +624,27 @@ files = [
 ]
 
 [[package]]
+name = "hishel"
+version = "0.0.24"
+description = "Persistent cache implementation for httpx and httpcore"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "hishel-0.0.24-py3-none-any.whl", hash = "sha256:8b6e43481485e1938d78bd35c0bcb38646fe8f2e090fedb64b4dc1d6015ffe49"},
+    {file = "hishel-0.0.24.tar.gz", hash = "sha256:4ac494c6bfedc431e480ab85d3435d4710230b2ad6092766b6ccf82b1d7e4152"},
+]
+
+[package.dependencies]
+httpx = ">=0.22.0"
+typing-extensions = ">=4.8.0"
+
+[package.extras]
+redis = ["redis (==5.0.1)"]
+s3 = ["boto3 (>=1.15.0,<=1.15.3)", "boto3 (>=1.15.3)"]
+sqlite = ["anysqlite (>=0.0.5)"]
+yaml = ["pyyaml (==6.0.1)"]
+
+[[package]]
 name = "htmldate"
 version = "1.8.0"
 description = "Fast and robust extraction of original and updated publication dates from URLs and web pages."
@@ -1970,4 +1991,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1168e09067370b12b9c820c99a2e01cc389f0ddca8948e8566f3b0a36f4f3eba"
+content-hash = "aa56e4f019a1ccda47f234b0c3d337e928c7690fbddbf4deff2a770540cfadfc"

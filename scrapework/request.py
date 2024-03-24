@@ -1,12 +1,26 @@
 import logging
-from typing import Dict
+from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 import httpx
 from httpx import HTTPError, TimeoutException
-from pydantic import BaseModel
 
 
-class Request(BaseModel):
+class HTTPClient(ABC):
+
+    @classmethod
+    @abstractmethod
+    def build_client(cls, **kwargs) -> httpx.Client:
+        pass
+
+
+class HttpxClient(HTTPClient):
+    @classmethod
+    def build_client(cls, **kwargs) -> httpx.Client:
+        return httpx.Client(**kwargs)
+
+
+class Request:
     url: str
     logger: logging.Logger
     headers: Dict[str, str] = {}
@@ -14,6 +28,19 @@ class Request(BaseModel):
     follow_redirects: bool = False
     proxy: str | None = None
     retries: int = 0
+    cls_client: type[HTTPClient] = HttpxClient
+    client_kwargs: Dict[str, Any] = {}
+
+    def __init__(self, url: str, **kwargs):
+        self.url = url
+        self.logger = kwargs.get("logger", logging.getLogger("request"))
+        self.headers = kwargs.get("headers", {})
+        self.timeout = kwargs.get("timeout", 10)
+        self.follow_redirects = kwargs.get("follow_redirects", False)
+        self.proxy = kwargs.get("proxy", None)
+        self.retries = kwargs.get("retries", 0)
+        self.cls_client = kwargs.get("cls_client", HttpxClient)
+        self.client_kwargs = kwargs.get("client_kwargs", {})
 
     class Config:
         arbitrary_types_allowed = True
@@ -34,22 +61,25 @@ class Request(BaseModel):
             }
         else:
             mounts = {}
+        client = self.cls_client.build_client(
+            headers=self.headers,
+            timeout=self.timeout,
+            follow_redirects=self.follow_redirects,
+            mounts=mounts,
+            **self.client_kwargs,
+        )
         try:
-            with httpx.Client(
-                headers=self.headers,
-                timeout=self.timeout,
-                follow_redirects=self.follow_redirects,
-                mounts=mounts,
-            ) as client:
 
-                request = client.build_request(
-                    "GET",
-                    self.url,
-                )
+            request = client.build_request(
+                "GET",
+                self.url,
+            )
 
-                response = client.send(request)
+            response = client.send(
+                request,
+            )
 
-                return response
+            return response
 
         except TimeoutException as err:
             self.logger.error(f"TimeoutError fetching {self.url}: {err}")  # type: ignore
@@ -62,3 +92,6 @@ class Request(BaseModel):
         except Exception as err:
             self.logger.error(f"Exception fetching {self.url}: {err}")  # type: ignore
             raise err
+
+        finally:
+            client.close()

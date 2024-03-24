@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Union
 
 import boto3
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from scrapework.context import Context
 
 
-class Pipeline(ABC, BaseModel):
+class Pipeline(ABC):
     @abstractmethod
     def process_items(
         self,
@@ -30,6 +30,9 @@ class JsonFilePipeline(Pipeline):
 
 class S3Pipeline(Pipeline):
     s3_bucket: str = Field(default_factory=str)
+
+    def __init__(self, s3_bucket: str):
+        self.s3_bucket = s3_bucket
 
     def process_items(
         self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]], ctx: Context

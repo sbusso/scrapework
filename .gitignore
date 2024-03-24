@@ -163,3 +163,4 @@ cython_debug/
 #.idea/
 spidy.py
 output.json
+cache

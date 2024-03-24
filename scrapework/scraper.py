@@ -1,9 +1,7 @@
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
 from httpx import Response
-from pydantic import BaseModel, Field
 
 from scrapework.config import EnvConfig
 from scrapework.context import Context
@@ -14,7 +12,7 @@ from scrapework.pipelines import Pipeline
 from scrapework.request import Request
 
 
-class Scraper(BaseModel, ABC):
+class Scraper(ABC):
     name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
     pipelines: List[Pipeline] = []
@@ -24,23 +22,30 @@ class Scraper(BaseModel, ABC):
         Callable[[Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
     middlewares: List[Middleware] = []
-    logger: logging.Logger = logging.getLogger(name)
-    config: EnvConfig = Field(default_factory=EnvConfig)
+    context: Optional[Context] = None
+    config: EnvConfig
 
     def __init__(self, **args):
 
         if not self.__class__.name:
             raise ValueError("Subclass must provide a name attribute")
-        super().__init__(**args)
+
         self.config = self.SpiderConfig.create_config()
-        self.callback = self.extract
+
         if not self.base_url and self.start_urls:
             self.base_url = self.start_urls[0]
 
         if not self.filename:
             self.filename = f"{self.name}.json"
 
+        # start_urls
+        args_start_urls = args.get("start_urls")
+        if args_start_urls and isinstance(args_start_urls, list):
+            self.start_urls = args_start_urls
+
         self.logger = new_logger(self.name)
+
+        self.context = Context(logger=self.logger, filename=self.filename)
 
     class SpiderConfig(EnvConfig):
         pass
@@ -56,6 +61,8 @@ class Scraper(BaseModel, ABC):
         BodyExtractor().extract(response)
 
     def run(self):
+        if not self.context:
+            raise ValueError("Context not defined")
         for url in self.start_urls:
             response = self.make_request(url)
 
@@ -67,10 +74,7 @@ class Scraper(BaseModel, ABC):
                     f"Request failed with status code {response.status_code}"
                 )
 
-            if not self.callback:
-                raise ValueError("Callback not defined")
-
-            items = self.callback(response)
+            items = self.extract(response)
 
             if items is None:
                 raise ValueError("Items not returned")
@@ -78,10 +82,6 @@ class Scraper(BaseModel, ABC):
             for pipeline in self.pipelines:
                 pipeline.process_items(items, self.context)
         self.logger.info("Scraping complete")
-
-    @property
-    def context(self) -> Context:
-        return Context(logger=self.logger, filename=self.filename)
 
     def make_request(self, url: str) -> Optional[Response]:
         request = Request(url=url, logger=self.logger)

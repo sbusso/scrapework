@@ -1,23 +1,22 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from random import choice
 from typing import List
 from urllib.parse import urlencode
 
-from pydantic import BaseModel
-
 from scrapework.request import Request
 
 
-class Proxy(BaseModel):
+class Proxy:
     url: str
 
-    def validate(self, value):
-        if not value.startswith("http"):
-            raise ValueError("Proxy url must start with http")
-        return value
+    def __init__(self, url: str):
+        if not url.startswith("http"):
+            raise ValueError("Proxy URL must start with http")
+
+        self.url = url
 
 
-class Middleware(BaseModel):
+class Middleware(ABC):
     @abstractmethod
     def process_request(self, request: Request):
         raise NotImplementedError
@@ -44,6 +43,9 @@ class MiddlewareLogging(Middleware):
 class MiddlewareProxy(Middleware):
     proxy: Proxy
 
+    def __init__(self, proxy: Proxy):
+        self.proxy = proxy
+
     def process_request(self, request: Request):
         if self.proxy:
             request.proxy = self.proxy.url
@@ -53,6 +55,9 @@ class MiddlewareProxy(Middleware):
 
 class MiddlewareScrapeOps(Middleware):
     api_key: str
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
 
     def process_request(self, request: Request):
 
@@ -64,6 +69,9 @@ class MiddlewareScrapeOps(Middleware):
 
 class ProxyRotationMiddleware(Middleware):
     proxies: List[Proxy]  # "http://Username:Password@85.237.57.198:20000",
+
+    def __init__(self, proxies: List[Proxy]):
+        self.proxies = proxies
 
     def process_request(self, request: Request):
         proxy = choice(self.proxies)
