@@ -3,6 +3,7 @@ from random import choice
 from typing import List
 from urllib.parse import urlencode
 
+from scrapework.context import Context
 from scrapework.request import Request
 
 
@@ -17,6 +18,12 @@ class Proxy:
 
 
 class Middleware(ABC):
+    context: Context
+
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self.context.logger.info(f"Using middleware: {self.__class__.__name__}")
+
     @abstractmethod
     def process_request(self, request: Request):
         raise NotImplementedError

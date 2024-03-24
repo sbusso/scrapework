@@ -53,8 +53,9 @@ class Scraper(ABC):
     class Config:
         arbitrary_types_allowed = True
 
-    def use(self, middleware: Middleware):
-        self.middlewares.append(middleware)
+    def use(self, cls: type[Middleware], **kwargs) -> None:
+        cls_instance = cls(context=self.context, **kwargs)  # type: ignore
+        self.middlewares.append(cls_instance)
 
     @abstractmethod
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:

@@ -4,13 +4,15 @@ from typing import Optional
 
 import hishel
 
+from scrapework.context import Context
 from scrapework.middleware import Middleware
 from scrapework.request import HTTPClient, Request
 
 
 class HishelClient(HTTPClient):
     @classmethod
-    def build_client(cls, **kwargs) -> hishel.CacheClient:
+    def build_client(cls, ctx: Context, **kwargs) -> hishel.CacheClient:
+        ctx.logger.debug("Building cache http client.")
         return hishel.CacheClient(**kwargs)
 
 
@@ -19,8 +21,8 @@ class CacheMiddleware(Middleware):
     storage: Optional[hishel.FileStorage] = None
     cache_dir: Optional[str] = None
 
-    def __init__(self, cache_dir: str, ttl: int = 3600):
-        super().__init__()
+    def __init__(self, context: Context, cache_dir: str, ttl: int = 3600):
+        super().__init__(context=context)
         self.controller = hishel.Controller(
             # Cache only GET and POST methods
             cacheable_methods=["GET", "POST"],
@@ -42,7 +44,7 @@ class CacheMiddleware(Middleware):
         serializer = hishel.PickleSerializer()
 
         self.storage = hishel.FileStorage(
-            base_path=Path(cache_dir_path), check_ttl_every=ttl
+            serializer=serializer, base_path=Path(cache_dir_path), check_ttl_every=ttl
         )
 
         self.cache_dir = cache_dir
@@ -51,7 +53,11 @@ class CacheMiddleware(Middleware):
         arbitrary_types_allowed = True
 
     def process_request(self, request: Request):
+        self.context.logger.debug(
+            f"Using cache middleware with cache dir: {self.cache_dir}"
+        )
         request.cls_client = HishelClient
         request.client_kwargs["controller"] = self.controller
         request.client_kwargs["storage"] = self.storage
+        request.request_kwargs["extensions"] = {"force_cache": True}
         return request

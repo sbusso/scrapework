@@ -5,18 +5,21 @@ from typing import Any, Dict
 import httpx
 from httpx import HTTPError, TimeoutException
 
+from scrapework.context import Context
+
 
 class HTTPClient(ABC):
 
     @classmethod
     @abstractmethod
-    def build_client(cls, **kwargs) -> httpx.Client:
+    def build_client(cls, ctx: Context, **kwargs) -> httpx.Client:
         pass
 
 
 class HttpxClient(HTTPClient):
     @classmethod
-    def build_client(cls, **kwargs) -> httpx.Client:
+    def build_client(cls, ctx: Context, **kwargs) -> httpx.Client:
+        ctx.logger.debug(f"Building httpx client with kwargs: {kwargs}")
         return httpx.Client(**kwargs)
 
 
@@ -30,6 +33,7 @@ class Request:
     retries: int = 0
     cls_client: type[HTTPClient] = HttpxClient
     client_kwargs: Dict[str, Any] = {}
+    request_kwargs: Dict[str, Any] = {}
 
     def __init__(self, url: str, **kwargs):
         self.url = url
@@ -41,6 +45,7 @@ class Request:
         self.retries = kwargs.get("retries", 0)
         self.cls_client = kwargs.get("cls_client", HttpxClient)
         self.client_kwargs = kwargs.get("client_kwargs", {})
+        self.request_kwargs = kwargs.get("request_kwargs", {})
 
     class Config:
         arbitrary_types_allowed = True
@@ -62,6 +67,7 @@ class Request:
         else:
             mounts = {}
         client = self.cls_client.build_client(
+            ctx=Context(logger=self.logger, filename=""),
             headers=self.headers,
             timeout=self.timeout,
             follow_redirects=self.follow_redirects,
@@ -70,13 +76,9 @@ class Request:
         )
         try:
 
-            request = client.build_request(
-                "GET",
+            response = client.get(
                 self.url,
-            )
-
-            response = client.send(
-                request,
+                **self.request_kwargs,
             )
 
             return response
