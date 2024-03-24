@@ -76,11 +76,12 @@ class Scraper(BaseModel, ABC):
                 raise ValueError("Items not returned")
 
             for pipeline in self.pipelines:
-                pipeline.process_items(items, self.filename)
+                pipeline.process_items(items, self.context)
+        self.logger.info("Scraping complete")
 
     @property
     def context(self) -> Context:
-        return Context(logger=self.logger, config=self.config)
+        return Context(logger=self.logger, filename=self.filename)
 
     def make_request(self, url: str) -> Optional[Response]:
         request = Request(url=url, logger=self.logger)
