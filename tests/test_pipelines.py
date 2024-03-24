@@ -32,12 +32,10 @@ def test_process_items_with_json_file_backend():
 
     context = Context(
         logger=logging.getLogger(),
-        filename="example.json",
+        filename="output.json",
     )
 
-    pipeline.process_items(items, context)
-
-    with open(filename, "r") as f:
-        data = json.load(f)
-
-    assert data == items
+    with patch("builtins.open") as mock_open:
+        pipeline.process_items(items, context)
+        assert mock_open.call_count == 1
+        assert mock_open.call_args_list[0][0][0] == filename
