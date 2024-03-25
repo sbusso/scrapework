@@ -1,25 +1,23 @@
 import json
 import logging
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, Union
+from abc import abstractmethod
+from typing import Any, Dict, Iterable, List, Union
 
 import boto3
 from pydantic import Field
 
-from scrapework.core.logger import Logger
+from scrapework.core.context import Context
+from scrapework.module import Module
 
 
-class Handler(ABC):
+class Handler(Module):
     logger: logging.Logger
-
-    def __init__(self) -> None:
-        self.logger = Logger().get_logger()
-        self.logger.info(f"Using handler: {self.__class__.__name__}")
 
     @abstractmethod
     def process_items(
         self,
-        items: Union[Dict[str, Any], Iterable[Dict[str, Any]]],
+        ctx: Context,
+        items: Union[Dict[str, Any], List[Dict[str, Any]]],
     ):
         pass
 
@@ -31,7 +29,9 @@ class JsonFileHandler(Handler):
         super().__init__()
         self.filename = filename
 
-    def process_items(self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]):
+    def process_items(
+        self, ctx: Context, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]
+    ):
 
         with open(self.filename, "w") as f:
             json.dump(items, f)
@@ -47,20 +47,12 @@ class S3Handler(Handler):
         self.s3_bucket = s3_bucket
         self.filename = filename
 
-    def process_items(self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]):
+    def process_items(
+        self, ctx: Context, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]
+    ):
 
         s3_client = boto3.client("s3")
 
         s3_client.put_object(
             Body=json.dumps(items), Bucket=self.s3_bucket, Key=self.filename
         )
-
-
-class MetadataHandler(Handler):
-    def process_items(self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]):
-        if isinstance(items, dict):
-            self.logger.info("Items count: 1")
-            return {"items_count": 1}
-        else:
-            self.logger.info(f"Items count: {len(list(items))}")
-            return {"items_count": len(list(items))}

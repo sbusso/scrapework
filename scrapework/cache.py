@@ -4,9 +4,10 @@ from typing import Optional
 
 import hishel
 
+from scrapework.core.context import Context
 from scrapework.core.logger import Logger
+from scrapework.middleware import RequestMiddleware
 from scrapework.request import HTTPClient, Request
-from scrapework.request_middleware import RequestMiddleware
 
 
 class HishelClient(HTTPClient):
@@ -52,7 +53,7 @@ class CacheMiddleware(RequestMiddleware):
     class Config:
         arbitrary_types_allowed = True
 
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         self.logger.debug(f"Using cache middleware with cache dir: {self.cache_dir}")
         request.cls_client = HishelClient
         request.client_kwargs["controller"] = self.controller

@@ -3,12 +3,16 @@ from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Unio
 
 from httpx import Response
 
+from scrapework.core.collector import MetadataCollector
 from scrapework.core.config import EnvConfig
+from scrapework.core.context import Context
 from scrapework.core.logger import Logger
 from scrapework.handlers import Handler
+from scrapework.middleware import RequestMiddleware
+from scrapework.module import Module
 from scrapework.parsers import HTMLBodyParser
+from scrapework.reporter import Reporter
 from scrapework.request import Request
-from scrapework.request_middleware import RequestMiddleware
 
 
 class Scraper(ABC):
@@ -24,6 +28,7 @@ class Scraper(ABC):
 
     handlers: List[Handler] = []
     middlewares: List[RequestMiddleware] = []
+    reporters: List[Reporter] = []
 
     config: EnvConfig
 
@@ -58,20 +63,35 @@ class Scraper(ABC):
     def configuration(self):
         pass
 
-    def use(self, module: RequestMiddleware | Handler) -> None:
-        if isinstance(module, RequestMiddleware):
-            self.middlewares.append(module)
-        elif isinstance(module, Handler):
-            self.handlers.append(module)
+    def use(self, module: Module) -> None:
+        match module:
+            case RequestMiddleware():
+                self.middlewares.append(module)
+            case Handler():
+                self.handlers.append(module)
+            case Reporter():
+                self.reporters.append(module)
 
     @abstractmethod
-    def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
+    def extract(
+        self, ctx: Context, response: Response
+    ) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         HTMLBodyParser().extract(response)
 
+    def variables(self):
+        return {
+            "name": self.name,
+        }
+
     def run(self):
+
+        ctx = Context(
+            variables=self.variables(),
+            collector=MetadataCollector(),
+        )
         for url in self.start_urls:
             # Load
-            response = self.make_request(url)
+            response = self.make_request(ctx, url)
 
             if not response:
                 raise ValueError("Request failed")
@@ -81,23 +101,28 @@ class Scraper(ABC):
                     f"Request failed with status code {response.status_code}"
                 )
             # Extract
-            items = self.extract(response)
+            items: List = list(self.extract(ctx, response))
 
             if items is None:
                 raise ValueError("Items not returned")
 
+            ctx.collector.set("items_count", len(items))
+
             # Process
             for handler in self.handlers:
-                handler.process_items(items)
+                handler.process_items(ctx, items)
+
+            for reporter in self.reporters:
+                reporter.report(ctx)
         self.logger.info("Scraping complete")
 
-    def make_request(self, url: str) -> Optional[Response]:
+    def make_request(self, ctx: Context, url: str) -> Optional[Response]:
         request = Request(url=url, logger=self.logger)
 
         self.logger.info(f"Making request to {url}")
 
         for middleware in self.middlewares:
-            request = middleware.process_request(request)
+            request = middleware.process_request(ctx, request)
 
         response = request.fetch()
 

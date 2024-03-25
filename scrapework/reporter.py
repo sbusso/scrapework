@@ -1,26 +1,21 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import httpx
 
 from scrapework.core.context import Context
+from scrapework.module import Module
 
 
-class Reporter(ABC):
-    """Processor _summary_
-
-    _extended_summary_
-
-    Args:
-        ABC (_type_): _description_
-    """
-
-    def __init__(self, context: Context) -> None:
-        self.context = context
-        self.context.logger.info(f"Using reporter: {self.__class__.__name__}")
+class Reporter(Module):
 
     @abstractmethod
-    def report(self, data):
+    def report(self, ctx: Context):
         pass
+
+
+class LoggerReporter(Reporter):
+    def report(self, ctx: Context):
+        self.logger.info(f"Processed {ctx.collector.get('items_count')} items.")
 
 
 class SlackReporter(Reporter):

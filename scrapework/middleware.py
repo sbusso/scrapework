@@ -1,11 +1,10 @@
-import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from random import choice
 from typing import List
 from urllib.parse import urlencode
 
 from scrapework.core.context import Context
-from scrapework.core.logger import Logger
+from scrapework.module import Module
 from scrapework.request import Request
 
 
@@ -19,32 +18,27 @@ class Proxy:
         self.url = url
 
 
-class RequestMiddleware(ABC):
-    logger: logging.Logger
-
-    def __init__(self) -> None:
-        self.logger = Logger().get_logger()
-        self.logger.info(f"Using middleware: {self.__class__.__name__}")
+class RequestMiddleware(Module):
 
     @abstractmethod
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         raise NotImplementedError
 
 
 class AnonymousHeaderMiddleware(RequestMiddleware):
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         request.headers.update({"User-Agent": "Anonymous"})
         return request
 
 
 class DefaultHeadersMiddleware(RequestMiddleware):
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         request.headers.update({"User-Agent": "Mozilla/5.0"})
         return request
 
 
 class LoggingMiddleware(RequestMiddleware):
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         self.logger.info(f"Making request to {request.url}")
         return request
 
@@ -52,11 +46,11 @@ class LoggingMiddleware(RequestMiddleware):
 class ProxyMiddleware(RequestMiddleware):
     proxy: Proxy
 
-    def __init__(self, context: Context, proxy: Proxy):
+    def __init__(self, proxy: Proxy):
         super().__init__()
         self.proxy = proxy
 
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         if self.proxy:
             request.proxy = self.proxy.url
 
@@ -66,11 +60,11 @@ class ProxyMiddleware(RequestMiddleware):
 class ScrapeOpsMiddleware(RequestMiddleware):
     api_key: str
 
-    def __init__(self, context: Context, api_key: str):
+    def __init__(self, api_key: str):
         super().__init__()
         self.api_key = api_key
 
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
 
         payload = {"api_key": self.api_key, "url": request.url}
         request.proxy = "https://proxy.scrapeops.io/v1/" + urlencode(payload)
@@ -81,11 +75,11 @@ class ScrapeOpsMiddleware(RequestMiddleware):
 class ProxyRotationMiddleware(RequestMiddleware):
     proxies: List[Proxy]  # "http://Username:Password@85.237.57.198:20000",
 
-    def __init__(self, context: Context, proxies: List[Proxy]):
+    def __init__(self, proxies: List[Proxy]):
         super().__init__()
         self.proxies = proxies
 
-    def process_request(self, request: Request):
+    def process_request(self, ctx: Context, request: Request):
         proxy = choice(self.proxies)
         request.proxy = proxy.url
         return request

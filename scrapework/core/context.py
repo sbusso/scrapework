@@ -1,18 +1,10 @@
-import logging
+from dataclasses import dataclass, field
+from typing import Dict
+
+from scrapework.core.collector import MetadataCollector
 
 
+@dataclass
 class Context:
-    logger: logging.Logger
-
-    filename: str
-
-    def __init__(self, logger: logging.Logger, filename: str):
-        if not isinstance(logger, logging.Logger):
-            raise TypeError("logger must be an instance of logging.Logger")
-        if not isinstance(filename, str):
-            raise TypeError("filename must be a string")
-        self.logger = logger
-        self.filename = filename
-
-    class Config:
-        arbitrary_types_allowed = True
+    collector: MetadataCollector = field(default_factory=MetadataCollector)
+    variables: Dict = field(default_factory=dict)
