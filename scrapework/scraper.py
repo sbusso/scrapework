@@ -12,6 +12,8 @@ from scrapework.request_middleware import RequestMiddleware
 
 
 class Scraper(ABC):
+    """Scraper base class"""
+
     name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
     base_url: str = ""
