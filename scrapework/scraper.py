@@ -56,12 +56,11 @@ class Scraper(ABC):
     def configuration(self):
         pass
 
-    def use(self, cls: type[RequestMiddleware] | type[Handler], **kwargs) -> None:
-        cls_instance = cls(**kwargs)  # type: ignore
-        if isinstance(cls_instance, RequestMiddleware):
-            self.middlewares.append(cls_instance)
-        elif isinstance(cls_instance, Handler):
-            self.handlers.append(cls_instance)
+    def use(self, module: RequestMiddleware | Handler) -> None:
+        if isinstance(module, RequestMiddleware):
+            self.middlewares.append(module)
+        elif isinstance(module, Handler):
+            self.handlers.append(module)
 
     @abstractmethod
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
