@@ -1,9 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
 from random import choice
 from typing import List
 from urllib.parse import urlencode
 
 from scrapework.core.context import Context
+from scrapework.core.logger import Logger
 from scrapework.request import Request
 
 
@@ -18,11 +20,11 @@ class Proxy:
 
 
 class RequestMiddleware(ABC):
-    context: Context
+    logger: logging.Logger
 
-    def __init__(self, context: Context) -> None:
-        self.context = context
-        self.context.logger.info(f"Using middleware: {self.__class__.__name__}")
+    def __init__(self) -> None:
+        self.logger = Logger().get_logger()
+        self.logger.info(f"Using middleware: {self.__class__.__name__}")
 
     @abstractmethod
     def process_request(self, request: Request):
@@ -43,7 +45,7 @@ class DefaultHeadersMiddleware(RequestMiddleware):
 
 class LoggingMiddleware(RequestMiddleware):
     def process_request(self, request: Request):
-        print(f"Making request to {request.url}")
+        self.logger.info(f"Making request to {request.url}")
         return request
 
 
@@ -51,7 +53,7 @@ class ProxyMiddleware(RequestMiddleware):
     proxy: Proxy
 
     def __init__(self, context: Context, proxy: Proxy):
-        super().__init__(context)
+        super().__init__()
         self.proxy = proxy
 
     def process_request(self, request: Request):
@@ -65,7 +67,7 @@ class ScrapeOpsMiddleware(RequestMiddleware):
     api_key: str
 
     def __init__(self, context: Context, api_key: str):
-        super().__init__(context)
+        super().__init__()
         self.api_key = api_key
 
     def process_request(self, request: Request):
@@ -80,7 +82,7 @@ class ProxyRotationMiddleware(RequestMiddleware):
     proxies: List[Proxy]  # "http://Username:Password@85.237.57.198:20000",
 
     def __init__(self, context: Context, proxies: List[Proxy]):
-        super().__init__(context)
+        super().__init__()
         self.proxies = proxies
 
     def process_request(self, request: Request):

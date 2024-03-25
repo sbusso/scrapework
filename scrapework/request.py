@@ -6,6 +6,7 @@ import httpx
 from httpx import HTTPError, TimeoutException
 
 from scrapework.core.context import Context
+from scrapework.core.logger import Logger
 
 
 class HTTPClient(ABC):
@@ -18,8 +19,8 @@ class HTTPClient(ABC):
 
 class HttpxClient(HTTPClient):
     @classmethod
-    def build_client(cls, ctx: Context, **kwargs) -> httpx.Client:
-        ctx.logger.debug("Building httpx client")
+    def build_client(cls, **kwargs) -> httpx.Client:
+        Logger().get_logger().debug("Building httpx client")
         return httpx.Client(**kwargs)
 
 
@@ -67,7 +68,6 @@ class Request:
         else:
             mounts = {}
         client = self.cls_client.build_client(
-            ctx=Context(logger=self.logger, filename=""),
             headers=self.headers,
             timeout=self.timeout,
             follow_redirects=self.follow_redirects,

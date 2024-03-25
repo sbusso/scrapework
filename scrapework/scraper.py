@@ -4,10 +4,9 @@ from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Unio
 from httpx import Response
 
 from scrapework.core.config import EnvConfig
-from scrapework.core.context import Context
+from scrapework.core.logger import Logger
+from scrapework.handlers import Handler
 from scrapework.parsers import HTMLBodyParser
-from scrapework.core.logger import new_logger
-from scrapework.pipelines import Handler
 from scrapework.request import Request
 from scrapework.request_middleware import RequestMiddleware
 
@@ -15,14 +14,15 @@ from scrapework.request_middleware import RequestMiddleware
 class Scraper(ABC):
     name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
-    pipelines: List[Handler] = []
     base_url: str = ""
     filename: str = ""
     callback: Optional[
         Callable[[Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
+
+    handlers: List[Handler] = []
     middlewares: List[RequestMiddleware] = []
-    context: Optional[Context] = None
+
     config: EnvConfig
 
     def __init__(self, **args):
@@ -43,9 +43,8 @@ class Scraper(ABC):
         if args_start_urls and isinstance(args_start_urls, list):
             self.start_urls = args_start_urls
 
-        self.logger = new_logger(self.name)
+        self.logger = Logger(self.name).get_logger()
 
-        self.context = Context(logger=self.logger, filename=self.filename)
         self.configuration()
 
     class SpiderConfig(EnvConfig):
@@ -58,19 +57,17 @@ class Scraper(ABC):
         pass
 
     def use(self, cls: type[RequestMiddleware] | type[Handler], **kwargs) -> None:
-        cls_instance = cls(context=self.context, **kwargs)  # type: ignore
+        cls_instance = cls(**kwargs)  # type: ignore
         if isinstance(cls_instance, RequestMiddleware):
             self.middlewares.append(cls_instance)
         elif isinstance(cls_instance, Handler):
-            self.pipelines.append(cls_instance)
+            self.handlers.append(cls_instance)
 
     @abstractmethod
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         HTMLBodyParser().extract(response)
 
     def run(self):
-        if not self.context:
-            raise ValueError("Context not defined")
         for url in self.start_urls:
             # Load
             response = self.make_request(url)
@@ -89,8 +86,8 @@ class Scraper(ABC):
                 raise ValueError("Items not returned")
 
             # Process
-            for pipeline in self.pipelines:
-                pipeline.process_items(items, self.context)
+            for handler in self.handlers:
+                handler.process_items(items)
         self.logger.info("Scraping complete")
 
     def make_request(self, url: str) -> Optional[Response]:

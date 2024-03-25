@@ -104,6 +104,21 @@ Examples of Observers:
 
 Observers can report metrics, statistics, and observations to external systems, dashboards, or logging platforms for monitoring, analysis, and alerting purposes.
 
+## Reporters
+
+Reporters are components that gather metadata, validation results, and other information from various parts of the scraper, including observers, validators, and pipelines. They process and format the collected data and push it to external channels for reporting and notification purposes.
+
+The framework provides a `Scraper.use(Reporter, **kwargs)` method to add reporters to the scraping flow. Multiple reporters can be used to send data to different channels or destinations.
+
+Examples of Reporters:
+
+- `EmailReporter`: Collects metadata and sends a summary report via email.
+- `SlackReporter`: Pushes real-time updates and notifications to a Slack channel.
+- `DatabaseReporter`: Stores the collected metadata and reports in a database for further analysis.
+- `LoggingReporter`: Logs the gathered information to a file or a logging service.
+
+Reporters can be configured with specific settings, such as email addresses, Slack webhook URLs, database connections, or logging levels, depending on the reporting destination.
+
 ## Usage
 
 To use the Web Scraper Framework, you need to create a subclass of the `Scraper` class and define a `configuration` method to set up the scraper's components. Here's an example:
@@ -125,10 +140,11 @@ class Spidy(Scraper):
         self.use(CacheMiddleware, cache_dir="cache")
         self.use(FormatValidator)
         self.use(RequiredFieldValidator, fields=["title", "price"])
-        self.use(ProgressObserver)
-        self.use(ErrorObserver)
         self.use(MetadataHandler)
-        self.use(JsonFileHandler)
+        self.use(JsonFileHandler, output_file="output.json")
+        self.use(ErrorObserver)
+        self.use(EmailReporter, email_to="admin@example.com")
+        self.use(SlackReporter, webhook_url="https://hooks.slack.com/...")
 ```
 
 In this example, the `Spidy` class is defined as a subclass of `Scraper`. The `configuration` method is overridden to specify the components to be used by the scraper. The `use` method is called to add middleware, handlers, and other components to the scraper.
