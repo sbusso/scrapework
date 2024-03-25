@@ -5,7 +5,7 @@ from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Unio
 
 from httpx import Response
 
-from scrapework.core.collector import MetadataCollector
+from scrapework.core.collector import JobCollector, MetadataCollector
 from scrapework.core.config import EnvConfig
 from scrapework.core.context import Context
 from scrapework.core.logger import Logger
@@ -127,9 +127,10 @@ class Scraper(ABC):
 
         items = []
 
+        begin_time = datetime.datetime.now()
         while self.urls_to_visit:
+            iter_begin_time = datetime.datetime.now()
             url_with_callback = self.urls_to_visit.pop(0)
-            begin_time = datetime.datetime.now()
 
             response = self.make_request(ctx, url_with_callback.url)
 
@@ -143,9 +144,19 @@ class Scraper(ABC):
 
             self.visited_urls.append(url_with_callback.url)
 
-            items += list(url_with_callback.extract(ctx, response))
+            new_items = list(url_with_callback.extract(ctx, response))
+            items += new_items
 
-            ctx.collector.set("items_count", len(items))
+            iter_end_time = datetime.datetime.now()
+            items_count = len(items)
+            ctx.collector.set("items_count", items_count)
+            ctx.collector.jobs.append(
+                JobCollector(
+                    url=url_with_callback.url,
+                    duration=iter_end_time - iter_begin_time,
+                    items_count=len(new_items),
+                )
+            )
 
         for handler in self.handlers:
             handler.process_items(ctx, items)
@@ -153,10 +164,10 @@ class Scraper(ABC):
         end_time = datetime.datetime.now()
 
         ctx.collector.set("duration", end_time - begin_time)
+        self.logger.info("Scraping complete")
 
         for reporter in self.reporters:
             reporter.report(ctx)
-        self.logger.info("Scraping complete")
 
     def make_request(self, ctx: Context, url: str) -> Optional[Response]:
         request = Request(url=url, logger=self.logger)

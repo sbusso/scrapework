@@ -1,6 +1,9 @@
+import datetime
 from abc import abstractmethod
 
 import httpx
+from rich.console import Console
+from rich.table import Table
 
 from scrapework.core.context import Context
 from scrapework.module import Module
@@ -15,9 +18,33 @@ class Reporter(Module):
 
 class LoggerReporter(Reporter):
     def report(self, ctx: Context):
+        duration = ctx.collector.get("duration")
+        duration_str = str(duration)
+        if isinstance(duration, datetime.timedelta):
+            duration_str = str(duration.total_seconds())
+
         self.logger.info(
-            f"Processed {ctx.collector.get('items_count')} items in {ctx.collector.get('duration')}s."
+            f"Processed {ctx.collector.get('items_count')} items in {duration_str} seconds."
         )
+
+
+class RichReporter(Reporter):
+    def report(self, ctx: Context):
+
+        table = Table(title="Parsing Results")
+        table.add_column("URL", style="blue", no_wrap=True)
+        table.add_column("Duration", justify="right", style="magenta", no_wrap=True)
+        table.add_column("Items", justify="right", style="green", no_wrap=True)
+
+        for job in ctx.collector.jobs:
+            table.add_row(
+                job.url,
+                str(job.duration.total_seconds()),
+                str(job.items_count),
+            )
+
+        console = Console()
+        console.print(table)
 
 
 class SlackReporter(Reporter):
