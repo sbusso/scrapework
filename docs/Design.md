@@ -1,10 +1,10 @@
-# Scraperwork Design
+# Scrapework Design
 
-This document outlines the design and components of the Scaperwork Framework, a Python-based framework inspired by Scrapy but designed to be more in-process oriented and accessible.
+This document outlines the design and components of the Scraperwork Framework, a Python-based framework inspired by Scrapy but designed to be more in-process oriented and accessible.
 
 ## Overview
 
-The Scaperwork Framework follows a layered architecture that separates the scraping process into distinct stages. Each stage is responsible for a specific task and can be customized and extended to meet the requirements of different scraping scenarios.
+The Scraperwork Framework follows a layered architecture that separates the scraping process into distinct stages. Each stage is responsible for a specific task and can be customized and extended to meet the requirements of different scraping scenarios.
 
 The main components of the framework are:
 
