@@ -31,10 +31,21 @@ class LoggerReporter(Reporter):
 class RichReporter(Reporter):
     def report(self, ctx: Context):
 
-        table = Table(title="Parsing Results")
-        table.add_column("URL", style="blue", no_wrap=True)
-        table.add_column("Duration", justify="right", style="magenta", no_wrap=True)
-        table.add_column("Items", justify="right", style="green", no_wrap=True)
+        total_items = sum(job.items_count for job in ctx.collector.jobs)
+        total_duration = sum(job.duration.total_seconds() for job in ctx.collector.jobs)
+
+        table = Table(title="Parsing Results", show_footer=True)
+        table.add_column("URL", "Total", style="blue", no_wrap=True)
+        table.add_column(
+            "Duration",
+            str(total_duration),
+            justify="right",
+            style="magenta",
+            no_wrap=True,
+        )
+        table.add_column(
+            "Items", str(total_items), justify="right", style="green", no_wrap=True
+        )
 
         for job in ctx.collector.jobs:
             table.add_row(
