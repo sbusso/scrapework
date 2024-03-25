@@ -1,5 +1,6 @@
 import datetime
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
 from httpx import Response
@@ -16,15 +17,26 @@ from scrapework.reporter import LoggerReporter, Reporter
 from scrapework.request import Request
 
 
+# Class to handle url associated with a parser callback, using the default parser if none is provided
+@dataclass
+class ExtractCallback:
+    url: str
+    extract: Callable[
+        [Context, Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]
+    ]
+
+
 class Scraper(ABC):
     """Scraper base class"""
 
     name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
+    visited_urls: List[str] = []
+    urls_to_visit: List[ExtractCallback] = []
     base_url: str = ""
     filename: str = ""
     callback: Optional[
-        Callable[[Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
+        Callable[[Context, Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
 
     handlers: List[Handler] = []
@@ -89,17 +101,37 @@ class Scraper(ABC):
             "name": self.name,
         }
 
-    def run(self):
+    def to_visit(
+        self, url: str, extract: Optional[Callable] = None, force=False
+    ) -> None:
+        if url in self.visited_urls and not force:
+            return
 
+        if not extract:
+            extract = self.extract
+
+        self.urls_to_visit.append(ExtractCallback(url, extract))
+
+    def run(self):
+        self.logger.info("Scraping started")
         ctx = Context(
             variables=self.variables(),
             collector=MetadataCollector(),
         )
+
+        if not self.start_urls:
+            raise ValueError("No start_urls provided")
+
         for url in self.start_urls:
+            self.to_visit(url)
+
+        items = []
+
+        while self.urls_to_visit:
+            url_with_callback = self.urls_to_visit.pop(0)
             begin_time = datetime.datetime.now()
 
-            # Load
-            response = self.make_request(ctx, url)
+            response = self.make_request(ctx, url_with_callback.url)
 
             if not response:
                 raise ValueError("Request failed")
@@ -108,24 +140,22 @@ class Scraper(ABC):
                 raise ValueError(
                     f"Request failed with status code {response.status_code}"
                 )
-            # Extract
-            items: List = list(self.extract(ctx, response))
 
-            if items is None:
-                raise ValueError("Items not returned")
+            self.visited_urls.append(url_with_callback.url)
+
+            items += list(url_with_callback.extract(ctx, response))
 
             ctx.collector.set("items_count", len(items))
 
-            # Process
-            for handler in self.handlers:
-                handler.process_items(ctx, items)
+        for handler in self.handlers:
+            handler.process_items(ctx, items)
 
-            end_time = datetime.datetime.now()
+        end_time = datetime.datetime.now()
 
-            ctx.collector.set("duration", end_time - begin_time)
+        ctx.collector.set("duration", end_time - begin_time)
 
-            for reporter in self.reporters:
-                reporter.report(ctx)
+        for reporter in self.reporters:
+            reporter.report(ctx)
         self.logger.info("Scraping complete")
 
     def make_request(self, ctx: Context, url: str) -> Optional[Response]:

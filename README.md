@@ -1,16 +1,16 @@
 # Scrapework
 
-Scrapework is a simple and opiniatated scraping framework inspired by Scrapy. It's designed for simple tasks and management, allowing you to focus on the scraping logic and not on the boilerplate code.
+Scrapework is a simple and opiniatated scraping framework inspired by Scrapy. It's designed for simple tasks and easy management, allowing you to focus on the scraping logic and not on the boilerplate code.
 
 - No CLI
-- No twisted / async
-- Respectful and slow for websites
+- No twisted framework
+- Designed for in-process usage
 
 ## Getting Started
 
 ### Installation
 
-First, clone the repository and install the dependencies:
+First, clone the repository or install as a dependencies:
 
 ```sh
 poetry add scrapework
@@ -20,18 +20,20 @@ poetry add scrapework
 
 Flow:
 
-- Fetch: retrieve web pages
-- Extract: parse and extract structured data from pages
-- Process: transform and export the structured data
+1. **Request Handling**: Use the `make_request` method to fetch web pages from `start_urls` with the help of `middlewares`.
+2. **Data Extraction**: Implement the `extract` method to parse and extract structured data from the fetched pages using `HTMLBodyParser` or other custom logic.
+3. **Data Processing**: Process and handle the structured data using `handlers` defined in the scraper.
+4. **Reporting**: Generate reports of the scraping process using `reporters`.
 
 For more details see [Design](docs/Design.md).
 
-### Spider Configuration
+### Scraper Configuration
 
 - `start_urls`: A list of URLs to start scraping from.
-- pipelines
-- extractors: comes with various extractors (plain body, smart extractors, markedown.)
-- middlewares: comes with various middlewares
+- request middleware to configure the request handling.
+- parsers: comes with various extractors (plain body, smart extractors, markedown.)
+- handlers: comes with various handlers (log, save to file, save to database.)
+- reporters
 
 ### Creating a Spider
 
@@ -40,7 +42,7 @@ A Spider is a class that defines how to navigate a website and extract data. Her
 ```python
 from scrapework.spider import Spider
 
-class MySpider(Spider):
+class MyScraper(Scraper):
     start_urls = ['http://quotes.toscrape.com']
 
     def parse(self, response):
