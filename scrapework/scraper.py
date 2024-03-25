@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
@@ -11,7 +12,7 @@ from scrapework.handlers import Handler
 from scrapework.middleware import RequestMiddleware
 from scrapework.module import Module
 from scrapework.parsers import HTMLBodyParser
-from scrapework.reporter import Reporter
+from scrapework.reporter import LoggerReporter, Reporter
 from scrapework.request import Request
 
 
@@ -60,8 +61,13 @@ class Scraper(ABC):
     class Config:
         arbitrary_types_allowed = True
 
-    def configuration(self):
-        pass
+    def use_modules(self) -> List[Module]:
+        return [LoggerReporter()]
+
+    def configuration(self) -> None:
+
+        for module in self.use_modules():
+            self.use(module)
 
     def use(self, module: Module) -> None:
         match module:
@@ -90,6 +96,8 @@ class Scraper(ABC):
             collector=MetadataCollector(),
         )
         for url in self.start_urls:
+            begin_time = datetime.datetime.now()
+
             # Load
             response = self.make_request(ctx, url)
 
@@ -111,6 +119,10 @@ class Scraper(ABC):
             # Process
             for handler in self.handlers:
                 handler.process_items(ctx, items)
+
+            end_time = datetime.datetime.now()
+
+            ctx.collector.set("duration", end_time - begin_time)
 
             for reporter in self.reporters:
                 reporter.report(ctx)

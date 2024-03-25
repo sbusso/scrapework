@@ -15,7 +15,9 @@ class Reporter(Module):
 
 class LoggerReporter(Reporter):
     def report(self, ctx: Context):
-        self.logger.info(f"Processed {ctx.collector.get('items_count')} items.")
+        self.logger.info(
+            f"Processed {ctx.collector.get('items_count')} items in {ctx.collector.get('duration')}s."
+        )
 
 
 class SlackReporter(Reporter):
