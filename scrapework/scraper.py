@@ -3,25 +3,25 @@ from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Unio
 
 from httpx import Response
 
-from scrapework.config import EnvConfig
-from scrapework.context import Context
-from scrapework.extractors import BodyExtractor
-from scrapework.logger import new_logger
-from scrapework.middleware import Middleware
-from scrapework.pipelines import Pipeline
+from scrapework.core.config import EnvConfig
+from scrapework.core.context import Context
+from scrapework.parsers import HTMLBodyParser
+from scrapework.core.logger import new_logger
+from scrapework.pipelines import Handler
 from scrapework.request import Request
+from scrapework.request_middleware import RequestMiddleware
 
 
 class Scraper(ABC):
     name: ClassVar[str] = "base_scraper"
     start_urls: List[str] = []
-    pipelines: List[Pipeline] = []
+    pipelines: List[Handler] = []
     base_url: str = ""
     filename: str = ""
     callback: Optional[
         Callable[[Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
-    middlewares: List[Middleware] = []
+    middlewares: List[RequestMiddleware] = []
     context: Optional[Context] = None
     config: EnvConfig
 
@@ -46,6 +46,7 @@ class Scraper(ABC):
         self.logger = new_logger(self.name)
 
         self.context = Context(logger=self.logger, filename=self.filename)
+        self.configuration()
 
     class SpiderConfig(EnvConfig):
         pass
@@ -53,18 +54,25 @@ class Scraper(ABC):
     class Config:
         arbitrary_types_allowed = True
 
-    def use(self, cls: type[Middleware], **kwargs) -> None:
+    def configuration(self):
+        pass
+
+    def use(self, cls: type[RequestMiddleware] | type[Handler], **kwargs) -> None:
         cls_instance = cls(context=self.context, **kwargs)  # type: ignore
-        self.middlewares.append(cls_instance)
+        if isinstance(cls_instance, RequestMiddleware):
+            self.middlewares.append(cls_instance)
+        elif isinstance(cls_instance, Handler):
+            self.pipelines.append(cls_instance)
 
     @abstractmethod
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
-        BodyExtractor().extract(response)
+        HTMLBodyParser().extract(response)
 
     def run(self):
         if not self.context:
             raise ValueError("Context not defined")
         for url in self.start_urls:
+            # Load
             response = self.make_request(url)
 
             if not response:
@@ -74,12 +82,13 @@ class Scraper(ABC):
                 raise ValueError(
                     f"Request failed with status code {response.status_code}"
                 )
-
+            # Extract
             items = self.extract(response)
 
             if items is None:
                 raise ValueError("Items not returned")
 
+            # Process
             for pipeline in self.pipelines:
                 pipeline.process_items(items, self.context)
         self.logger.info("Scraping complete")

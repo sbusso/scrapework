@@ -22,7 +22,9 @@ Flow:
 
 - Fetch: retrieve web pages
 - Extract: parse and extract structured data from pages
-- Pipeline: transform and export the structured data
+- Process: transform and export the structured data
+
+For more details see [Design](docs/Design.md).
 
 ### Spider Configuration
 

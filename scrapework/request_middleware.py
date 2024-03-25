@@ -3,7 +3,7 @@ from random import choice
 from typing import List
 from urllib.parse import urlencode
 
-from scrapework.context import Context
+from scrapework.core.context import Context
 from scrapework.request import Request
 
 
@@ -17,7 +17,7 @@ class Proxy:
         self.url = url
 
 
-class Middleware(ABC):
+class RequestMiddleware(ABC):
     context: Context
 
     def __init__(self, context: Context) -> None:
@@ -29,28 +29,29 @@ class Middleware(ABC):
         raise NotImplementedError
 
 
-class MiddlewareAnonymousHeader(Middleware):
+class AnonymousHeaderMiddleware(RequestMiddleware):
     def process_request(self, request: Request):
         request.headers.update({"User-Agent": "Anonymous"})
         return request
 
 
-class MiddlewareDefaultHeaders(Middleware):
+class DefaultHeadersMiddleware(RequestMiddleware):
     def process_request(self, request: Request):
         request.headers.update({"User-Agent": "Mozilla/5.0"})
         return request
 
 
-class MiddlewareLogging(Middleware):
+class LoggingMiddleware(RequestMiddleware):
     def process_request(self, request: Request):
         print(f"Making request to {request.url}")
         return request
 
 
-class MiddlewareProxy(Middleware):
+class ProxyMiddleware(RequestMiddleware):
     proxy: Proxy
 
-    def __init__(self, proxy: Proxy):
+    def __init__(self, context: Context, proxy: Proxy):
+        super().__init__(context)
         self.proxy = proxy
 
     def process_request(self, request: Request):
@@ -60,10 +61,11 @@ class MiddlewareProxy(Middleware):
         return request
 
 
-class MiddlewareScrapeOps(Middleware):
+class ScrapeOpsMiddleware(RequestMiddleware):
     api_key: str
 
-    def __init__(self, api_key: str):
+    def __init__(self, context: Context, api_key: str):
+        super().__init__(context)
         self.api_key = api_key
 
     def process_request(self, request: Request):
@@ -74,10 +76,11 @@ class MiddlewareScrapeOps(Middleware):
         return request
 
 
-class ProxyRotationMiddleware(Middleware):
+class ProxyRotationMiddleware(RequestMiddleware):
     proxies: List[Proxy]  # "http://Username:Password@85.237.57.198:20000",
 
-    def __init__(self, proxies: List[Proxy]):
+    def __init__(self, context: Context, proxies: List[Proxy]):
+        super().__init__(context)
         self.proxies = proxies
 
     def process_request(self, request: Request):

@@ -4,8 +4,8 @@ from typing import Optional
 
 import hishel
 
-from scrapework.context import Context
-from scrapework.middleware import Middleware
+from scrapework.core.context import Context
+from scrapework.request_middleware import RequestMiddleware
 from scrapework.request import HTTPClient, Request
 
 
@@ -16,7 +16,7 @@ class HishelClient(HTTPClient):
         return hishel.CacheClient(**kwargs)
 
 
-class CacheMiddleware(Middleware):
+class CacheMiddleware(RequestMiddleware):
     controller: Optional[hishel.Controller] = None
     storage: Optional[hishel.FileStorage] = None
     cache_dir: Optional[str] = None

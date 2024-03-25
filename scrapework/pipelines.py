@@ -5,10 +5,16 @@ from typing import Any, Dict, Iterable, Union
 import boto3
 from pydantic import Field
 
-from scrapework.context import Context
+from scrapework.core.context import Context
 
 
-class Pipeline(ABC):
+class Handler(ABC):
+    context: Context
+
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self.context.logger.info(f"Using handler: {self.__class__.__name__}")
+
     @abstractmethod
     def process_items(
         self,
@@ -18,7 +24,7 @@ class Pipeline(ABC):
         pass
 
 
-class JsonFilePipeline(Pipeline):
+class JsonFileHandler(Handler):
     def process_items(
         self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]], ctx: Context
     ):
@@ -28,7 +34,7 @@ class JsonFilePipeline(Pipeline):
         ctx.logger.info(f"Items written to {ctx.filename}")
 
 
-class S3Pipeline(Pipeline):
+class S3Handler(Handler):
     s3_bucket: str = Field(default_factory=str)
 
     def __init__(self, s3_bucket: str):
@@ -45,7 +51,7 @@ class S3Pipeline(Pipeline):
         )
 
 
-class MetadataPipeline(Pipeline):
+class MetadataHandler(Handler):
     def process_items(
         self, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]], ctx: Context
     ):

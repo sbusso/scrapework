@@ -4,12 +4,12 @@ from parsel import Selector
 from trafilatura import bare_extraction
 
 
-class Extractor:
+class Parser:
     def extract(self, response) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         raise NotImplementedError
 
 
-class BodyExtractor(Extractor):
+class HTMLBodyParser(Parser):
     def extract(self, response) -> Dict[str, str]:
         body = Selector(response.text).xpath("//body/text()").get()
 
@@ -19,7 +19,7 @@ class BodyExtractor(Extractor):
         return {"body": body}
 
 
-class ArticleExtractor(Extractor):
+class ArticleParser(Parser):
     def extract(self, response) -> Dict[str, str]:
         article = bare_extraction(response.text)
 

@@ -5,7 +5,7 @@ from typing import Any, Dict
 import httpx
 from httpx import HTTPError, TimeoutException
 
-from scrapework.context import Context
+from scrapework.core.context import Context
 
 
 class HTTPClient(ABC):
@@ -19,7 +19,7 @@ class HTTPClient(ABC):
 class HttpxClient(HTTPClient):
     @classmethod
     def build_client(cls, ctx: Context, **kwargs) -> httpx.Client:
-        ctx.logger.debug(f"Building httpx client with kwargs: {kwargs}")
+        ctx.logger.debug("Building httpx client")
         return httpx.Client(**kwargs)
 
 

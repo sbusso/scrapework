@@ -2,14 +2,14 @@ import json
 import logging
 from unittest.mock import patch
 
-from scrapework.context import Context
-from scrapework.pipelines import JsonFilePipeline, S3Pipeline
+from scrapework.core.context import Context
+from scrapework.pipelines import JsonFileHandler, S3Handler
 
 
 def test_process_items_with_s3_backend():
     items = [{"name": "item1"}, {"name": "item2"}]
 
-    pipeline = S3Pipeline(s3_bucket="my-bucket")
+    pipeline = S3Handler(s3_bucket="my-bucket")
 
     context = Context(
         logger=logging.getLogger(),
@@ -28,7 +28,11 @@ def test_process_items_with_s3_backend():
 def test_process_items_with_json_file_backend():
     items = [{"name": "item1"}, {"name": "item2"}]
     filename = "output.json"
-    pipeline = JsonFilePipeline()
+    context = Context(
+        logger=logging.getLogger(),
+        filename=filename,
+    )
+    pipeline = JsonFileHandler(context)
 
     context = Context(
         logger=logging.getLogger(),

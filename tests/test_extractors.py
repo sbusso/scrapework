@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock
 
-from scrapework.extractors import BodyExtractor, Extractor
+from scrapework.parsers import HTMLBodyParser, Parser
 
 
 def test_extract_body():
-    extractor = BodyExtractor()
+    extractor = HTMLBodyParser()
     response = MagicMock()
     response.text = "<body>Hello, world!</body>"
     result = extractor.extract(response)
@@ -12,7 +12,7 @@ def test_extract_body():
 
 
 def test_extract_not_implemented():
-    extractor = Extractor()
+    extractor = Parser()
     response = MagicMock()
     # Assert that NotImplementedError is raised
     try:
