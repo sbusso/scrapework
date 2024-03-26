@@ -30,7 +30,7 @@ class Scraper(ABC):
     """Scraper base class"""
 
     name: ClassVar[str] = "base_scraper"
-    start_urls: List[str] = []
+    # start_urls: List[str] = []
     visited_urls: List[str] = []
     urls_to_visit: List[ExtractCallback] = []
     base_url: str = ""
@@ -42,7 +42,7 @@ class Scraper(ABC):
     handlers: List[Handler] = []
     middlewares: List[RequestMiddleware] = []
     reporters: List[Reporter] = []
-
+    modules: List[Module] = [LoggerReporter()]
     config: EnvConfig
 
     def __init__(self, **args):
@@ -52,16 +52,8 @@ class Scraper(ABC):
 
         self.config = self.SpiderConfig.create_config()
 
-        if not self.base_url and self.start_urls:
-            self.base_url = self.start_urls[0]
-
         if not self.filename:
             self.filename = f"{self.name}.json"
-
-        # start_urls
-        args_start_urls = args.get("start_urls")
-        if args_start_urls and isinstance(args_start_urls, list):
-            self.start_urls = args_start_urls
 
         self.logger = Logger(self.name).get_logger()
 
@@ -74,11 +66,11 @@ class Scraper(ABC):
         arbitrary_types_allowed = True
 
     def use_modules(self) -> List[Module]:
-        return [LoggerReporter()]
+        return []
 
     def configuration(self) -> None:
 
-        for module in self.use_modules():
+        for module in [*self.modules, *self.use_modules()]:
             self.use(module)
 
     def use(self, module: Module) -> None:
@@ -112,17 +104,17 @@ class Scraper(ABC):
 
         self.urls_to_visit.append(ExtractCallback(url, extract))
 
-    def run(self):
+    def run(self, start_urls: List[str]):
         self.logger.info("Scraping started")
         ctx = Context(
             variables=self.variables(),
             collector=MetadataCollector(),
         )
 
-        if not self.start_urls:
+        if not start_urls:
             raise ValueError("No start_urls provided")
 
-        for url in self.start_urls:
+        for url in start_urls:
             self.to_visit(url)
 
         items = []
