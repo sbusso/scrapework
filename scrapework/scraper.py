@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
 from httpx import Response
+from parsel import Selector
 
 from scrapework.core.collector import JobCollector, MetadataCollector
 from scrapework.core.config import EnvConfig
@@ -22,7 +23,7 @@ from scrapework.request import Request
 class ExtractCallback:
     url: str
     extract: Callable[
-        [Context, Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]
+        [Context, Selector], Union[Dict[str, Any], Iterable[Dict[str, Any]]]
     ]
 
 
@@ -84,9 +85,9 @@ class Scraper(ABC):
 
     @abstractmethod
     def extract(
-        self, ctx: Context, response: Response
+        self, ctx: Context, body: Selector
     ) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
-        HTMLBodyParser().extract(response)
+        HTMLBodyParser().extract(body)
 
     def variables(self):
         return {
@@ -136,7 +137,9 @@ class Scraper(ABC):
 
             self.visited_urls.append(url_with_callback.url)
 
-            new_items = list(url_with_callback.extract(ctx, response))
+            ctx.response = response
+
+            new_items = list(url_with_callback.extract(ctx, Selector(response.text)))
             items += new_items
 
             iter_end_time = datetime.datetime.now()

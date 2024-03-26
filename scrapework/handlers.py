@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Any, Dict, Iterable, List, Union
 
 import boto3
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from scrapework.core.context import Context
 from scrapework.module import Module
@@ -22,6 +22,23 @@ class Handler(Module):
         pass
 
 
+def encode_items(items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]):
+    if isinstance(items, BaseModel):
+        items = items.model_dump()
+    elif isinstance(items, Iterable) and all(
+        isinstance(item, BaseModel) for item in items
+    ):
+        items = [item.model_dump() for item in items]  # type: ignore
+
+    # Ensure items are a list of dictionaries or a single dictionary
+    if isinstance(items, Dict):
+        items = [items]  # type: ignore
+    elif isinstance(items, Iterable):
+        items = list(items)
+
+    return items
+
+
 class JsonFileHandler(Handler):
     filename: str
 
@@ -34,7 +51,7 @@ class JsonFileHandler(Handler):
     ):
 
         with open(self.filename, "w") as f:
-            json.dump(items, f)
+            json.dump(encode_items(items), f)
         self.logger.info(f"Items written to {self.filename}")
 
 
@@ -54,5 +71,7 @@ class S3Handler(Handler):
         s3_client = boto3.client("s3")
 
         s3_client.put_object(
-            Body=json.dumps(items), Bucket=self.s3_bucket, Key=self.filename
+            Body=json.dumps(encode_items(items)),
+            Bucket=self.s3_bucket,
+            Key=self.filename,
         )
