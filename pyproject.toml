@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scrapework"
-version = "0.3.2"
+version = "0.3.3"
 description = "simple scraping framework"
 authors = ["Stéphane Busso <stephane.busso@gmail.com>"]
 license = "MIT"
@@ -20,6 +20,7 @@ trafilatura = "^1.8.0"
 httpx = "^0.27.0"
 hishel = "^0.0.24"
 rich = "^13.7.1"
+fake-useragent = "^1.5.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"

@@ -3,6 +3,8 @@ from random import choice
 from typing import List
 from urllib.parse import urlencode
 
+from fake_useragent import UserAgent
+
 from scrapework.core.context import Context
 from scrapework.module import Module
 from scrapework.request import Request
@@ -67,8 +69,26 @@ class ScrapeOpsMiddleware(RequestMiddleware):
     def process_request(self, ctx: Context, request: Request):
 
         payload = {"api_key": self.api_key, "url": request.url}
-        request.proxy = "https://proxy.scrapeops.io/v1/" + urlencode(payload)
+        # request.client_kwargs["proxy"] = "https://proxy.scrapeops.io/v1/?" + urlencode(
+        #     payload
+        # )
 
+        request.request_url = "https://proxy.scrapeops.io/v1/?" + urlencode(payload)
+
+        # self.logger.debug(f"Making request to {request.url}")
+
+        return request
+
+
+class FakeUserAgentMiddleware(RequestMiddleware):
+    ua: UserAgent
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ua = UserAgent()
+
+    def process_request(self, ctx: Context, request: Request):
+        request.headers.update({"User-Agent": self.ua.random})
         return request
 
 

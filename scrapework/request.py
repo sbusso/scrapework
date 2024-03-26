@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 import httpx
-from httpx import HTTPError, TimeoutException
+from httpx import URL, HTTPError, TimeoutException
 
 from scrapework.core.context import Context
 from scrapework.core.logger import Logger
@@ -26,6 +26,7 @@ class HttpxClient(HTTPClient):
 
 class Request:
     url: str
+    request_url: str
     logger: logging.Logger
     headers: Dict[str, str] = {}
     timeout: int = 10
@@ -38,11 +39,12 @@ class Request:
 
     def __init__(self, url: str, **kwargs):
         self.url = url
+        self.request_url = url
         self.logger = kwargs.get("logger", logging.getLogger("request"))
         self.headers = kwargs.get("headers", {})
         self.timeout = kwargs.get("timeout", 10)
         self.follow_redirects = kwargs.get("follow_redirects", False)
-        self.proxy = kwargs.get("proxy", None)
+        # self.proxy = kwargs.get("proxy", None)
         self.retries = kwargs.get("retries", 0)
         self.cls_client = kwargs.get("cls_client", HttpxClient)
         self.client_kwargs = kwargs.get("client_kwargs", {})
@@ -61,6 +63,7 @@ class Request:
         :return: The fetched HTML content as a string, or None if there was an error.
         """
         if self.proxy:
+            self.logger.debug(f"Using proxy: {self.proxy}")
             mounts = {
                 "https://": httpx.HTTPTransport(proxy=self.proxy),
                 "http://": httpx.HTTPTransport(proxy=self.proxy),
@@ -75,12 +78,12 @@ class Request:
             **self.client_kwargs,
         )
         try:
-
-            response = client.get(
-                self.url,
+            response: httpx.Response = client.get(
+                self.request_url,
                 **self.request_kwargs,
             )
 
+            response.request.url = URL(self.url)
             return response
 
         except TimeoutException as err:
