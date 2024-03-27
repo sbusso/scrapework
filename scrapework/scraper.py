@@ -89,9 +89,9 @@ class Scraper(ABC):
 
     @abstractmethod
     def extract(
-        self, ctx: Context, body: Selector
+        self, ctx: Context, selector: Selector
     ) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
-        HTMLBodyParser().extract(body)
+        HTMLBodyParser().extract(selector)
 
     def variables(self):
         return {

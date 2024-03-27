@@ -1,22 +1,21 @@
-from unittest.mock import MagicMock
+from parsel import Selector
 
 from scrapework.parsers import HTMLBodyParser, Parser
 
 
-def test_extract_body():
+def test_extract_body() -> None:
     extractor = HTMLBodyParser()
-    response = MagicMock()
-    response.text = "<body>Hello, world!</body>"
-    result = extractor.extract(response)
+    selector = Selector("<body>Hello, world!</body>")
+    result = extractor.extract(selector)
     assert result == {"body": "Hello, world!"}
 
 
 def test_extract_not_implemented():
     extractor = Parser()
-    response = MagicMock()
+    selector = Selector("")
     # Assert that NotImplementedError is raised
     try:
-        extractor.extract(response)
+        extractor.extract(selector)
         assert False, "Expected NotImplementedError to be raised"
     except NotImplementedError:
         pass

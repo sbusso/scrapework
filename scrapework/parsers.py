@@ -4,13 +4,13 @@ from trafilatura import bare_extraction
 
 
 class Parser:
-    def extract(self, body) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
+    def extract(self, selector) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         raise NotImplementedError
 
 
 class HTMLBodyParser(Parser):
-    def extract(self, body) -> Dict[str, str]:
-        body = body.xpath("//body/text()").get()
+    def extract(self, selector) -> Dict[str, str]:
+        body = selector.xpath("//body/text()").get()
 
         if not body:
             raise ValueError("Body not found")
@@ -19,8 +19,8 @@ class HTMLBodyParser(Parser):
 
 
 class ArticleParser(Parser):
-    def extract(self, body) -> Dict[str, str]:
-        article = bare_extraction(body)
+    def extract(self, selector) -> Dict[str, str]:
+        article = bare_extraction(selector)
 
         if not article:
             raise ValueError("Article not found")
