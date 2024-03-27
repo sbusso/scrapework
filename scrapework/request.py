@@ -1,27 +1,10 @@
 import logging
-from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 import httpx
 from httpx import URL, HTTPError, TimeoutException
 
-from scrapework.core.context import Context
-from scrapework.core.logger import Logger
-
-
-class HTTPClient(ABC):
-
-    @classmethod
-    @abstractmethod
-    def build_client(cls, ctx: Context, **kwargs) -> httpx.Client:
-        pass
-
-
-class HttpxClient(HTTPClient):
-    @classmethod
-    def build_client(cls, **kwargs) -> httpx.Client:
-        Logger().get_logger().debug("Building httpx client")
-        return httpx.Client(**kwargs)
+from scrapework.core.http_client import HTTPClient, HttpxClient
 
 
 class Request:
@@ -52,6 +35,9 @@ class Request:
 
     class Config:
         arbitrary_types_allowed = True
+
+    def urljoin(self, url: str) -> str:
+        return str(URL(self.url).join(URL(url)))
 
     def fetch(self) -> httpx.Response:
         """

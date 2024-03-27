@@ -149,8 +149,6 @@ class Scraper(ABC):
 
             self.visited_urls.append(url_with_callback.url)
 
-            ctx.response = response
-
             new_items = list(url_with_callback.extract(ctx, Selector(response.text)))
             items += new_items
 
@@ -187,5 +185,8 @@ class Scraper(ABC):
         response = request.fetch()
 
         self.logger.info(f"Received response with status code {response.status_code}")
+
+        ctx.response = response
+        ctx.request = request
 
         return response
