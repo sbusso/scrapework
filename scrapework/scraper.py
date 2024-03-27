@@ -5,6 +5,7 @@ from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Unio
 
 from httpx import Response
 from parsel import Selector
+from pydantic import BaseModel
 
 from scrapework.core.collector import JobCollector, MetadataCollector
 from scrapework.core.config import EnvConfig
@@ -83,6 +84,9 @@ class Scraper(ABC):
             case Reporter():
                 self.reporters.append(module)
 
+    def build_start_urls(self, input: BaseModel) -> List[str]:
+        return []
+
     @abstractmethod
     def extract(
         self, ctx: Context, body: Selector
@@ -105,18 +109,26 @@ class Scraper(ABC):
 
         self.urls_to_visit.append(ExtractCallback(url, extract))
 
-    def run(self, start_urls: List[str]):
+    def run(
+        self, start_urls: Optional[List[str]] = None, input: Optional[BaseModel] = None
+    ):
         self.logger.info("Scraping started")
+
+        if not start_urls and not input:
+            raise ValueError("Either start_urls or input must be provided")
+
+        start_urls = start_urls or []
+
+        if input:
+            start_urls += self.build_start_urls(input)
+
+        for url in start_urls:
+            self.to_visit(url)
+
         ctx = Context(
             variables=self.variables(),
             collector=MetadataCollector(),
         )
-
-        if not start_urls:
-            raise ValueError("No start_urls provided")
-
-        for url in start_urls:
-            self.to_visit(url)
 
         items = []
 

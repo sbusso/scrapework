@@ -165,3 +165,4 @@ spidy.py
 
 cache
 *.json
+*_scraper.py
