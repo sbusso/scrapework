@@ -7,7 +7,6 @@ from httpx import Response
 from parsel import Selector
 
 from scrapework.core.collector import JobCollector, MetadataCollector
-from scrapework.core.config import EnvConfig
 from scrapework.core.context import Context
 from scrapework.core.logger import Logger
 from scrapework.handlers import Handler
@@ -44,14 +43,11 @@ class Scraper(ABC):
     middlewares: List[RequestMiddleware] = []
     reporters: List[Reporter] = []
     modules: List[Module] = [LoggerReporter()]
-    config: EnvConfig
 
     def __init__(self, **args):
 
         if not self.__class__.name:
             raise ValueError("Subclass must provide a name attribute")
-
-        self.config = self.SpiderConfig.create_config()
 
         if not self.filename:
             self.filename = f"{self.name}.json"
@@ -59,12 +55,6 @@ class Scraper(ABC):
         self.logger = Logger(self.name).get_logger()
 
         self.configuration()
-
-    class SpiderConfig(EnvConfig):
-        pass
-
-    class Config:
-        arbitrary_types_allowed = True
 
     def use_modules(self) -> List[Module]:
         return []
