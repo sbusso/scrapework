@@ -1,6 +1,7 @@
 import json
 import logging
 from abc import abstractmethod
+from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, Iterable, List, Union
 
 import boto3
@@ -25,11 +26,15 @@ class Handler(Module):
 def encode_items(items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]):
     if isinstance(items, BaseModel):
         items = items.model_dump()
+
     elif isinstance(items, Iterable) and all(
         isinstance(item, BaseModel) for item in items
     ):
         items = [item.model_dump() for item in items]  # type: ignore
-
+    elif is_dataclass(items):
+        items = asdict(items)  # type: ignore
+    elif isinstance(items, Iterable) and all(is_dataclass(item) for item in items):
+        items = [asdict(item) for item in items]  # type: ignore
     # Ensure items are a list of dictionaries or a single dictionary
     if isinstance(items, Dict):
         items = [items]  # type: ignore
