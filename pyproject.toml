@@ -18,7 +18,7 @@ parsel = "^1.9.0"
 courlan = "^1.0.0"
 trafilatura = "^1.8.0"
 httpx = "^0.27.0"
-hishel = "^0.0.24"
+hishel = ">=0.0.24,<0.0.26"
 rich = "^13.7.1"
 fake-useragent = "^1.5.1"
 
