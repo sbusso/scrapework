@@ -1080,13 +1080,13 @@ files = [
 
 [[package]]
 name = "trafilatura"
-version = "1.8.0"
+version = "1.8.1"
 description = "Python package and command-line tool designed to gather text on the Web, includes all necessary discovery and text processing components to perform web crawling, downloads, scraping, and extraction of main texts, metadata and comments."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "trafilatura-1.8.0-py3-none-any.whl", hash = "sha256:58ce230f987745537ce912ae8f3d182f11b921976a2bd2a8c248e5aca9ecc4ae"},
-    {file = "trafilatura-1.8.0.tar.gz", hash = "sha256:ea54875ed24f3eafaf199b8a0f89b5835c7cf343733c32efbc4af9d3057a8f72"},
+    {file = "trafilatura-1.8.1-py3-none-any.whl", hash = "sha256:2bed0ce01375fbd397893baad39cef9c202a44d74665ac65ee912377bb46b28a"},
+    {file = "trafilatura-1.8.1.tar.gz", hash = "sha256:6b878dfdbd5c5dfb55d0f8307f2b7dc15ac3458054f74861ff98a172f5e38720"},
 ]
 
 [package.dependencies]
@@ -1095,7 +1095,7 @@ charset-normalizer = {version = ">=3.2.0", markers = "python_version >= \"3.7\""
 courlan = ">=1.0.0"
 htmldate = ">=1.8.0"
 justext = ">=3.0.0"
-lxml = {version = ">=4.9.4,<6", markers = "platform_system != \"Darwin\" or python_version > \"3.8\""}
+lxml = {version = ">=4.9.4,<5.2.0", markers = "platform_system != \"Darwin\" or python_version > \"3.8\""}
 urllib3 = {version = ">=1.26,<3", markers = "python_version >= \"3.7\""}
 
 [package.extras]
