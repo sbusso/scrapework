@@ -1,15 +1,25 @@
 from typing import Any, Dict, Iterable, Union
 
+from parsel import Selector
 from trafilatura import bare_extraction
+
+from scrapework.core.context import Context
 
 
 class Parser:
-    def extract(self, selector) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
+    def extract(
+        self, ctx: Context, selector: Selector
+    ) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
         raise NotImplementedError
 
 
+class EmptyParser(Parser):
+    def extract(self, _ctx: Context, _selector: Selector) -> Dict[str, str]:
+        return {}
+
+
 class HTMLBodyParser(Parser):
-    def extract(self, selector) -> Dict[str, str]:
+    def extract(self, _: Context, selector: Selector) -> Dict[str, str]:
         body = selector.xpath("//body/text()").get()
 
         if not body:
@@ -19,7 +29,7 @@ class HTMLBodyParser(Parser):
 
 
 class ArticleParser(Parser):
-    def extract(self, selector) -> Dict[str, str]:
+    def extract(self, _ctx: Context, selector: Selector) -> Dict[str, str]:
         article = bare_extraction(selector)
 
         if not article:

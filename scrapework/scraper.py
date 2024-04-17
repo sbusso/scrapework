@@ -1,5 +1,5 @@
 import datetime
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Union
 
@@ -12,7 +12,7 @@ from scrapework.core.logger import Logger
 from scrapework.handlers import Handler
 from scrapework.middleware import RequestMiddleware
 from scrapework.module import Module
-from scrapework.parsers import HTMLBodyParser
+from scrapework.parsers import Parser
 from scrapework.reporter import LoggerReporter, Reporter
 from scrapework.request import Request
 
@@ -39,9 +39,12 @@ class Scraper(ABC):
         Callable[[Context, Response], Union[Dict[str, Any], Iterable[Dict[str, Any]]]]
     ] = None
 
+    parser: Parser = Parser()
+
     handlers: List[Handler] = []
     middlewares: List[RequestMiddleware] = []
     reporters: List[Reporter] = []
+
     modules: List[Module] = [LoggerReporter()]
 
     def __init__(self, **args):
@@ -64,7 +67,15 @@ class Scraper(ABC):
         for module in [*self.modules, *self.use_modules()]:
             self.use(module)
 
-    def use(self, module: Module) -> None:
+    def variables(self):
+        return {
+            "name": self.name,
+        }
+
+    def use(self, module: Module | List[Module]) -> None:
+        if isinstance(module, list):
+            for m in module:
+                self.use(m)
         match module:
             case RequestMiddleware():
                 self.middlewares.append(module)
@@ -76,27 +87,20 @@ class Scraper(ABC):
     def build_start_urls(self, input) -> List[str]:
         return []
 
-    @abstractmethod
     def extract(
         self, ctx: Context, selector: Selector
     ) -> Union[Dict[str, Any], Iterable[Dict[str, Any]]]:
-        HTMLBodyParser().extract(selector)
+        return self.parser.extract(ctx, selector)
 
-    def variables(self):
-        return {
-            "name": self.name,
-        }
+    def process(
+        self, ctx: Context, items: Union[Dict[str, Any], Iterable[Dict[str, Any]]]
+    ):
+        for handler in self.handlers:
+            handler.process_items(ctx, items)
 
-    def to_visit(
-        self, url: str, extract: Optional[Callable] = None, force=False
-    ) -> None:
-        if url in self.visited_urls and not force:
-            return
-
-        if not extract:
-            extract = self.extract
-
-        self.urls_to_visit.append(ExtractCallback(url, extract))
+    def report(self, ctx: Context):
+        for reporter in self.reporters:
+            reporter.report(ctx)
 
     def run(self, start_urls: Optional[List[str]] = None, input: Optional[Any] = None):
         self.logger.info("Scraping started")
@@ -136,8 +140,11 @@ class Scraper(ABC):
 
             self.visited_urls.append(url_with_callback.url)
 
-            new_items = list(url_with_callback.extract(ctx, Selector(response.text)))
-            items += new_items
+            new_items = url_with_callback.extract(ctx, Selector(response.text))
+
+            # TODO: self.process(ctx, new_items)
+
+            items += list(new_items)
 
             iter_end_time = datetime.datetime.now()
             items_count = len(items)
@@ -146,20 +153,29 @@ class Scraper(ABC):
                 JobCollector(
                     url=url_with_callback.url,
                     duration=iter_end_time - iter_begin_time,
-                    items_count=len(new_items),
+                    items_count=len(list(new_items)),
                 )
             )
 
-        for handler in self.handlers:
-            handler.process_items(ctx, items)
+        self.process(ctx, items)
 
         end_time = datetime.datetime.now()
 
         ctx.collector.set("duration", end_time - begin_time)
         self.logger.info("Scraping complete")
 
-        for reporter in self.reporters:
-            reporter.report(ctx)
+        self.report(ctx)
+
+    def to_visit(
+        self, url: str, extract: Optional[Callable] = None, force=False
+    ) -> None:
+        if url in self.visited_urls and not force:
+            return
+
+        if not extract:
+            extract = self.extract
+
+        self.urls_to_visit.append(ExtractCallback(url, extract))
 
     def make_request(self, ctx: Context, url: str) -> Optional[Response]:
         request = Request(url=url, logger=self.logger)

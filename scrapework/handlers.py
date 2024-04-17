@@ -2,7 +2,7 @@ import json
 import logging
 from abc import abstractmethod
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Dict, Iterable, Union
 
 import boto3
 from pydantic import BaseModel, Field
@@ -12,13 +12,18 @@ from scrapework.module import Module
 
 
 class Handler(Module):
+    """Handler Processes and handles the structured data
+
+    Processes and handls the structured data, such as saving it to a file or uploading it to a cloud storage service.
+    """
+
     logger: logging.Logger
 
     @abstractmethod
     def process_items(
         self,
         ctx: Context,
-        items: Union[Dict[str, Any], List[Dict[str, Any]]],
+        items: Union[Dict[str, Any], Iterable[Dict[str, Any]]],
     ):
         pass
 

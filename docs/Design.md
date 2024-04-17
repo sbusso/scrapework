@@ -1,19 +1,17 @@
 # Scrapework Design
 
-This document outlines the design and components of the Scraperwork Framework, a Python-based framework inspired by Scrapy but designed to be more in-process oriented and accessible.
+This document outlines the design and components of the Scraperwork Framework, a Python-based framework inspired by Scrapy and designed to be in-process first.
 
 ## Overview
 
-The Scraperwork Framework follows a layered architecture that separates the scraping process into distinct stages. Each stage is responsible for a specific task and can be customized and extended to meet the requirements of different scraping scenarios.
+The Scraperwork Framework follows a modular architecture that separates the scraping process into distinct stages. Each stage is responsible for a specific task and can be controled and extended to meet the requirements of different scraping scenarios.
 
 The main components of the framework are:
 
-1. Request
-2. Parsers
-3. Validators
-4. Item Processors
-5. Output Handlers
-6. Observers
+1. [Request Middleware](#request)
+2. [Parsers](#parsers)
+3. [Output Handlers](#output-handlers)
+4. [Reporters](#reporters)
 
 These components work together to fetch web pages, extract structured data, process and validate the extracted data, and handle the output or storage of the scraped data.
 
@@ -25,7 +23,7 @@ The Request Layer is responsible for handling HTTP requests and managing the req
 
 The Client is the core component that sends HTTP requests and receives responses. By default, the framework uses the `httpx` library as the HTTP client, but it can be easily overridden or customized.
 
-### RequestMiddleware
+### Request Middleware
 
 RequestMiddleware are components that sit between the Client and the request flow. They can intercept and modify the requests before they are sent. Middleware can be used to add functionality such as caching, header manipulation, proxy support, or authentication.
 
@@ -49,7 +47,7 @@ Examples of Parsers:
 - `PriceExtractor`: Extracts price data from a webpage.
 - `LinkExtractor`: Extracts URLs from a webpage for further crawling.
 
-## Validators
+## Validators (TODO)
 
 Validators are components that validate the extracted and processed data. They ensure data integrity, format consistency, and perform data quality checks. Validators can verify data types, check field formats, validate constraints, and identify any discrepancies or anomalies in the extracted data.
 
@@ -64,7 +62,7 @@ Examples of Validators:
 
 Validators can raise exceptions or log warnings when validation fails, allowing the scraping process to handle and report errors appropriately.
 
-## Item Processors
+## Item Processors (TODO)
 
 Item Processors are components that take the extracted data items and perform additional processing, transformation, or validation. They can modify the data, enrich it with additional information, or filter out unwanted items.
 
@@ -89,7 +87,7 @@ Examples of Output Handlers:
 - `DatabaseHandler`: Stores the scraped data in a database.
 - `S3Handler`: Uploads the scraped data to Amazon S3.
 
-## Observers
+## Observers (TODO)
 
 Observers are components that monitor and observe the scraping process. They track various metrics, statistics, and events related to the scraping operation. Observers provide insights into the progress, performance, and health of the scraper.
 

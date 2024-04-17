@@ -1,104 +1,126 @@
 # Scrapework
 
-Scrapework is a simple and opiniatated scraping framework inspired by Scrapy. It's designed for simple tasks and easy management, allowing you to focus on the scraping logic and not on the boilerplate code.
+Scrapework is a simple and opiniatated framework to extract data from the web. It is inspired by Scrapy and designed for simple tasks and easy management, allowing you to focus on the scraping logic. It is built on top of `parsel` (used by Scrapy) and `httpx` libraries. Some of the key differences are:
 
 - No CLI
 - No twisted framework
 - Designed for in-process usage
 
-## Getting Started
-
-### Installation
+## Installation
 
 First, clone the repository or install as a dependencies:
+
+With pip:
+
+```sh
+pip install scrapework
+```
+
+With poetry:
 
 ```sh
 poetry add scrapework
 ```
 
-### Quick Start
+## Quick Start
 
-Flow:
+### Create a Scraper
 
-1. **Request Handling**: Use the `make_request` method to fetch web pages from `start_urls` with the help of `middlewares`.
-2. **Data Extraction**: Implement the `extract` method to parse and extract structured data from the fetched pages using `HTMLBodyParser` or other custom logic.
-3. **Data Processing**: Process and handle the structured data using `handlers` defined in the scraper.
-4. **Reporting**: Generate reports of the scraping process using `reporters`.
-
-For more details see [Design](docs/Design.md).
-
-### Scraper Configuration
-
-- `start_urls`: A list of URLs to start scraping from.
-- request middleware to configure the request handling.
-- parsers: comes with various extractors (plain body, smart extractors, markedown.)
-- handlers: comes with various handlers (log, save to file, save to database.)
-- reporters
-
-### Creating a Spider
-
-A Spider is a class that defines how to navigate a website and extract data. Here's how you can create a Spider:
+First, create a Scraper class to define how extract data and optionally navigate a website. Here's how you can create a simple Scraper:
 
 ```python
-from scrapework.spider import Spider
+from scrapework.scraper import Scraper
 
-class MyScraper(Scraper):
-    start_urls = ['http://quotes.toscrape.com']
+class SimpleScraper(Scraper):
+    name = "simple_scraper"
 
-    def parse(self, response):
-        for quote in response.css('div.quote'):
+    def extract(self, ctx, selector):
+        for quote in selector.css('div.quote'):
             yield {
                 'text': quote.css('span.text::text').get(),
                 'author': quote.css('span small::text').get(),
             }
+
+    def process(self, items, config):
+        for item in items:
+            print(f"Quote: {item['text']}, Author: {item['author']}")
 ```
 
-The `parse` method is where you define your scraping logic. It's called with the HTTP response of the initial URL.
+Similar to Scrapy `parse`, the `extract` method is an expected and this is where you define your scraping logic. It's called with the HTTP response of the initial URL.
 
-### Creating an Extractor
+### Run the Scraper
 
-An Extractor is a class that defines how to extract data from a webpage. Here's how you can create an Extractor:
+To run the Scraper, you need to create an instance and call the `run` method passing the URLs to scrape:
 
 ```python
-from scrapework.extractors import Extractor
+scraper = SimpleScraper()
+scraper.run(['http://quotes.toscrape.com'])
+```
 
-class MyExtractor(Extractor):
-    def extract(self, selector):
+### Modules Configuration
+
+Scrapework can be extended using various modules:
+
+- `middleware` to configure the request handling (chache, proxy, ...).
+- `handlers`: comes with various handlers (log, save to file, save to database.)
+- `reporters`: to export and log the scraping events and metadata.
+
+## Flow
+
+The scraping flow consists of the following steps:
+
+1. **Webpage downloading**: Fetch the webpages using `httpx`. Optionally, use `middleware` to handle requests.
+2. **Extract data**: Extract structured data from the HTML using `parsers`.
+3. **Export data**: Use `handlers` to store or export the structured data.
+4. **Reporting**: Generate reports and logs of the scraping process using `reporters`.
+
+For more details see [Design](docs/Design.md).
+
+## Advanced Usage
+
+For more advanced usage, you can override other methods in the Scraper, Parser, and Pipeline classes. Check the source code for more details.
+
+### Add Parser
+
+Alternatively, you can create a Parser class to define how to extract data from a webpage. Here's how you can create an Parser and configure it in the Scraper:
+
+```python
+from scrapework.parsers import Parser, Scraper
+
+class SimpleScraper(Scraper):
+    name = "simple_scraper"
+    parser = SimpleParser()
+
+class SimpleParser(Parser):
+    def extract(self, ctx, selector):
         return {
             'text': selector.css('span.text::text').get(),
             'author': selector.css('span small::text').get(),
         }
 ```
 
-The `extract` method is where you define your extraction logic. It's called with a `parsel.Selector` object that you can use to extract data from the HTML.
+The `extract` method is where you define your extraction logic. It's called passing a `parsel.Selector` object that you can use to extract data from the HTML using `css` or `xpath`.
 
-### Creating a Pipeline
+### Add a data handler
 
-A Pipeline is a class that defines how to process and store the data. Here's how you can create a Pipeline:
+Similar to a pipeline, an `handler` defines how to process and store the data:
 
 ```python
-from scrapework.pipelines import ItemPipeline
+from scrapework.handlers import Handler
 
-class MyPipeline(ItemPipeline):
+class SimpleHandler(Handler):
     def process_items(self, items, config):
         for item in items:
             print(f"Quote: {item['text']}, Author: {item['author']}")
 ```
 
-The `process_items` method is where you define your processing logic. It's called with the items extracted by the Extractor and a `PipelineConfig` object.
-
-### Running the Spider
-
-To run the Spider, you need to create an instance of it and call the `start_requests` method:
+The `process_items` method is where you define your processing logic. It's called with the items extracted by the Parser and a `PipelineConfig` object.
 
 ```python
-spider = MySpider()
-spider.start_requests()
+scraper = SimpleScraper()
+
+scraper.use(SimpleHandler())
 ```
-
-## Advanced Usage
-
-For more advanced usage, you can override other methods in the Spider, Extractor, and Pipeline classes. Check the source code for more details.
 
 ## Testing
 
