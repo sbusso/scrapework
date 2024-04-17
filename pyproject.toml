@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scrapework"
-version = "0.4.5"
+version = "0.4.6"
 description = "simple scraping framework"
 authors = ["Stéphane Busso <stephane.busso@gmail.com>"]
 license = "MIT"
