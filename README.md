@@ -44,11 +44,14 @@ class SimpleScraper(Scraper):
     def process(self, items, config):
         for item in items:
             print(f"Quote: {item['text']}, Author: {item['author']}")
+
+
+scraper = SimpleScraper()
+scraper.run(['http://quotes.toscrape.com'])
+
 ```
 
-Similar to Scrapy `parse`, the `extract` method is an expected and this is where you define your scraping logic. It's called with the HTTP response of the initial URL.
-
-### Run the Scraper
+Similar to Scrapy `parse`, the `extract` method is an expected and this is where you define your scraping logic. It's called with the HTTP response of the initial URL. You can use the `parsel.Selector` object to extract data from the HTML using `css` or `xpath`.
 
 To run the Scraper, you need to create an instance and call the `run` method passing the URLs to scrape:
 
@@ -59,10 +62,10 @@ scraper.run(['http://quotes.toscrape.com'])
 
 ### Modules Configuration
 
-Scrapework can be extended using various modules:
+Scrapework can be extended using modules:
 
 - `middleware` to configure the request handling (chache, proxy, ...).
-- `handlers`: comes with various handlers (log, save to file, save to database.)
+- `handlers`: to export the data, save them to file or database.
 - `reporters`: to export and log the scraping events and metadata.
 
 ## Flow
