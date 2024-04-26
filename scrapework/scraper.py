@@ -144,7 +144,11 @@ class Scraper(ABC):
 
             # TODO: self.process(ctx, new_items)
 
-            items += list(new_items)
+            # append new_items to items, Items can be a list or a dict
+            if isinstance(new_items, dict):
+                items.append(new_items)
+            else:
+                items += new_items
 
             iter_end_time = datetime.datetime.now()
             items_count = len(items)
