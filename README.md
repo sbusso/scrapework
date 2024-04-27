@@ -133,6 +133,12 @@ To run the tests, use the following command:
 pytest tests/
 ```
 
+using playwright:
+
+```sh
+playwright install
+```
+
 ## Contributing
 
 Contributions are welcome! Please read the contributing guidelines first.

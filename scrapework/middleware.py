@@ -103,3 +103,9 @@ class ProxyRotationMiddleware(RequestMiddleware):
         proxy = choice(self.proxies)
         request.proxy = proxy.url
         return request
+
+
+class PlaywrightMiddleware(RequestMiddleware):
+    def process_request(self, ctx: Context, request: Request):
+        request.playwright = True
+        return request
