@@ -15,7 +15,7 @@ class Processor(ABC):
 
     def __init__(self) -> None:
         self.logger = Logger().get_logger()
-        self.logger.info(f"Using processor: {self.__class__.__name__}")
+        self.logger.debug(f"Using processor: {self.__class__.__name__}")
 
     @abstractmethod
     def process_items(
