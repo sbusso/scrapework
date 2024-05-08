@@ -10,10 +10,10 @@ class Logger:
             cls._instance.configure(name)
         return cls._instance
 
-    def configure(self, name="default"):
+    def configure(self, name="default", level=logging.INFO):
 
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(level)
 
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S"
