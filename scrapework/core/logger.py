@@ -21,10 +21,12 @@ class Logger:
 
         file_handler = logging.FileHandler(f"{name}.log")
         file_handler.setFormatter(formatter)
+        file_handler.setLevel(level)
         self.logger.addHandler(file_handler)
 
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
+        console_handler.setLevel(level)
         self.logger.addHandler(console_handler)
 
     def get_logger(self):
