@@ -32,6 +32,20 @@ test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypo
 trio = ["trio (>=0.23)"]
 
 [[package]]
+name = "babel"
+version = "2.15.0"
+description = "Internationalization utilities"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "Babel-2.15.0-py3-none-any.whl", hash = "sha256:08706bdad8d0a3413266ab61bd6c34d0c28d6e1e7badf40a2cebe67644e2e1fb"},
+    {file = "babel-2.15.0.tar.gz", hash = "sha256:8daf0e265d05768bc6c7a314cf1321e9a123afc328cc635c18622a2f30a04413"},
+]
+
+[package.extras]
+dev = ["freezegun (>=1.0,<2.0)", "pytest (>=6.0)", "pytest-cov"]
+
+[[package]]
 name = "black"
 version = "24.4.2"
 description = "The uncompromising code formatter."
@@ -250,17 +264,17 @@ files = [
 
 [[package]]
 name = "courlan"
-version = "1.0.0"
+version = "1.2.0"
 description = "Clean, filter and sample URLs to optimize data collection – includes spam, content type and language filters."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "courlan-1.0.0-py3-none-any.whl", hash = "sha256:74ceed951343880b8488ee4296d1bbc76dbae7287aa6dc115299a5b157e3b9fb"},
-    {file = "courlan-1.0.0.tar.gz", hash = "sha256:3c35511c36525cb2f941cd6709b7a3a742ed95f0b9e56c97eec0c16fdc035183"},
+    {file = "courlan-1.2.0-py3-none-any.whl", hash = "sha256:df9d3735b611e717c52a813a49d17a8b4d3a9d8b87bbace9065171fc5d084397"},
+    {file = "courlan-1.2.0.tar.gz", hash = "sha256:0cbc9cac83970c651b937a7823a5d92cbebb6b601454ea0fb6cb4d0ee5d1845d"},
 ]
 
 [package.dependencies]
-langcodes = ">=3.3.0"
+babel = ">=2.11.0"
 tld = {version = ">=0.13", markers = "python_version >= \"3.7\""}
 urllib3 = {version = ">=1.26,<3", markers = "python_version >= \"3.7\""}
 
@@ -524,20 +538,6 @@ files = [
 
 [package.dependencies]
 lxml = ">=4.4.2"
-
-[[package]]
-name = "langcodes"
-version = "3.3.0"
-description = "Tools for labeling human languages with IETF language tags"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "langcodes-3.3.0-py3-none-any.whl", hash = "sha256:4d89fc9acb6e9c8fdef70bcdf376113a3db09b67285d9e1d534de6d8818e7e69"},
-    {file = "langcodes-3.3.0.tar.gz", hash = "sha256:794d07d5a28781231ac335a1561b8442f8648ca07cd518310aeb45d6f0807ef6"},
-]
-
-[package.extras]
-data = ["language-data (>=1.1,<2.0)"]
 
 [[package]]
 name = "lxml"
